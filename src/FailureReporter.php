@@ -69,7 +69,7 @@ final class FailureReporter
     {
         $class = $metadata->payloadClass;
         // e.g. App\Modules\Payment\Application\Payload\PaymentPayload
-        // → look for App\Modules\Payment\Application\Event\PayloadHandler\PaymentHandler
+        // → look for App\Modules\Payment\Application\Handler\PayloadHandler\PaymentHandler
         $handlerGuess = preg_replace('/\\\\Payload\\\\(\w+)Payload$/', '\\\\Event\\\\PayloadHandler\\\\$1Handler', $class);
         if ($handlerGuess && $handlerGuess !== $class && class_exists($handlerGuess)) {
             try {
