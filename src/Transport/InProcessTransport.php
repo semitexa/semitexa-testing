@@ -27,6 +27,48 @@ final class InProcessTransport implements TransportInterface
     public function send(TestCaseDescriptor $case): ResponseResult
     {
         $request = $this->buildRequest($case);
+        $isMemoryCheck = (bool) ($case->context['memory_leak_check'] ?? false);
+
+        if ($isMemoryCheck) {
+            $warmup = (int) ($case->context['warmup'] ?? 5);
+            $iterations = (int) ($case->context['iterations'] ?? 20);
+
+            // 1. Warm up
+            for ($i = 0; $i < $warmup; $i++) {
+                $this->application->handleRequest($this->buildRequest($case));
+                $this->application->requestScopedContainer->reset();
+            }
+
+            gc_collect_cycles();
+            $baseline = memory_get_usage();
+
+            // 2. Iterations
+            for ($i = 0; $i < $iterations; $i++) {
+                $this->application->handleRequest($this->buildRequest($case));
+                $this->application->requestScopedContainer->reset();
+            }
+
+            gc_collect_cycles();
+            $final = memory_get_usage();
+
+            // Final check response (the last one)
+            $response = $this->application->handleRequest($request);
+            $this->application->requestScopedContainer->reset();
+
+            return new ResponseResult(
+                statusCode: $response->statusCode,
+                headers: $response->headers,
+                body: $response->content,
+                durationMs: 0,
+                context: [
+                    'memory_stats' => [
+                        'baseline' => $baseline,
+                        'final' => $final,
+                        'iterations' => $iterations
+                    ]
+                ]
+            );
+        }
 
         RequestDtoHydrator::enableStrictMode(true);
         $start = microtime(true);
@@ -34,6 +76,7 @@ final class InProcessTransport implements TransportInterface
             $response = $this->application->handleRequest($request);
         } finally {
             RequestDtoHydrator::enableStrictMode(false);
+            $this->application->requestScopedContainer->reset();
         }
         $durationMs = (microtime(true) - $start) * 1000;
 
@@ -77,9 +120,12 @@ final class InProcessTransport implements TransportInterface
 
         if ($case->body !== null) {
             if (in_array($method, ['POST', 'PUT', 'PATCH'], true)) {
-                $content = is_array($case->body)
-                    ? json_encode($case->body, JSON_THROW_ON_ERROR)
-                    : (string) $case->body;
+                if (is_array($case->body)) {
+                    // Use JSON_INVALID_UTF8_SUBSTITUTE to allow encoding of chaotic data without throwing JsonException.
+                    $content = json_encode($case->body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+                } else {
+                    $content = (string) $case->body;
+                }
                 $headers['Content-Type'] ??= 'application/json';
             } elseif ($method === 'GET' && is_array($case->body)) {
                 $query = $case->body;

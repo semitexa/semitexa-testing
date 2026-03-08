@@ -9,6 +9,7 @@ final readonly class TestCaseDescriptor
     /**
      * @param array<string, string> $headers
      * @param int|int[]             $expectedStatus
+     * @param array<string, mixed>  $context
      */
     public function __construct(
         public string $description,
@@ -17,5 +18,6 @@ final readonly class TestCaseDescriptor
         public array $headers,
         public mixed $body,
         public int|array $expectedStatus,
+        public array $context = [],
     ) {}
 }
