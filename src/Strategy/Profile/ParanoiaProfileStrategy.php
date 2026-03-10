@@ -8,6 +8,7 @@ use Semitexa\Testing\Contract\TestingProfileInterface;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Testing\Data\TestCaseDescriptor;
+use Semitexa\Testing\Strategy\CoroutineIsolationStrategy;
 use Semitexa\Testing\Strategy\MemoryLeakStrategy;
 use Semitexa\Testing\Strategy\MonkeyTestingStrategy;
 
@@ -18,6 +19,7 @@ use Semitexa\Testing\Strategy\MonkeyTestingStrategy;
  * - StandardProfile (Auth, Methods, Type Enforcement)
  * - MonkeyTesting (Random data stress-test)
  * - MemoryLeakTesting (Long-run stability and leak detection)
+ * - CoroutineIsolation (Cross-request and auth context data leak detection)
  *
  * Use this level for core modules (User, Auth, Billing) to ensure absolute stability.
  */
@@ -29,6 +31,7 @@ final class ParanoiaProfileStrategy implements TestingProfileInterface
             StandardProfileStrategy::class,
             MonkeyTestingStrategy::class,
             MemoryLeakStrategy::class,
+            CoroutineIsolationStrategy::class,
         ];
     }
 
