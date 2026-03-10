@@ -17,6 +17,10 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  * No network, no Swoole coroutine conflicts.
  * Enables strict hydration mode for the duration of each request.
  *
+ * WARNING: RequestDtoHydrator::$strictTypes is a worker-global static flag.
+ * This transport is only safe in single-process PHPUnit CLI.
+ * Never use InProcessTransport inside a Swoole worker with concurrent coroutines.
+ *
  * Use this transport for: SecurityStrategy, HttpMethodStrategy,
  * TypeEnforcementStrategy, MonkeyTestingStrategy.
  */

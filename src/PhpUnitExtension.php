@@ -55,7 +55,17 @@ final class PhpUnitExtension implements Extension
     {
         if (self::$transport === null) {
             // Fallback for tests that don't use the extension (e.g. unit tests of strategies)
-            self::$transport = new InProcessTransport(new Application());
+            try {
+                self::$transport = new InProcessTransport(new Application());
+            } catch (\Throwable $e) {
+                throw new \RuntimeException(
+                    'Failed to create InProcessTransport. Ensure PhpUnitExtension is configured in phpunit.xml '
+                    . 'or that the application container is bootstrapped before running payload tests. '
+                    . $e->getMessage(),
+                    0,
+                    $e,
+                );
+            }
         }
         return self::$transport;
     }

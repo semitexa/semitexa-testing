@@ -51,11 +51,12 @@ final class FailureReporter
         $this->ensureDir($this->outputDir);
 
         $filename = sprintf(
-            '%s/%s_%s_%s.json',
+            '%s/%s_%s_%s_%s.json',
             rtrim($this->outputDir, '/'),
             date('Ymd_His'),
             $this->slugify(basename(str_replace('\\', '/', $metadata->payloadClass))),
             $this->slugify(basename(str_replace('\\', '/', get_class($strategy)))),
+            bin2hex(random_bytes(4)),
         );
 
         file_put_contents($filename, json_encode($artifact, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
