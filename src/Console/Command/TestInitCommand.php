@@ -39,7 +39,10 @@ class TestInitCommand extends BaseCommand
             return Command::FAILURE;
         }
 
-        file_put_contents($targetFile, self::STUB);
+        if (file_put_contents($targetFile, self::STUB) === false) {
+            $io->error("Failed to write file: {$targetFile}");
+            return Command::FAILURE;
+        }
 
         $io->success('Created tests/Payload/ProjectPayloadsContractTest.php');
         $io->text([

@@ -56,7 +56,7 @@ final class FailureReporter
             date('Ymd_His'),
             $this->slugify(basename(str_replace('\\', '/', $metadata->payloadClass))),
             $this->slugify(basename(str_replace('\\', '/', get_class($strategy)))),
-            bin2hex(random_bytes(4)),
+            $this->uniqueSuffix(),
         );
 
         file_put_contents($filename, json_encode($artifact, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -98,6 +98,15 @@ final class FailureReporter
             $dir = dirname($dir);
         }
         return sys_get_temp_dir() . '/semitexa-test-reports';
+    }
+
+    private function uniqueSuffix(): string
+    {
+        try {
+            return bin2hex(random_bytes(4));
+        } catch (\Exception) {
+            return uniqid('', true);
+        }
     }
 
     private function slugify(string $str): string

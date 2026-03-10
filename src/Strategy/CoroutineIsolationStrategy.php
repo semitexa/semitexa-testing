@@ -24,15 +24,15 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  *   B) Auth Context Isolation — sends requests as User A then User B,
  *      verifies User B's response does not contain User A's identity.
  *
- *   C) Concurrent Request Isolation (HttpTransport only) — sends N parallel requests
- *      with unique markers, verifies each response contains only its own marker.
- *      Controlled via context['isolation_concurrent'] (default: 0 = disabled).
+ *   C) Concurrent Request Isolation — NOT YET IMPLEMENTED.
+ *      Requires transport-level support for parallel dispatch.
+ *      Will be controlled via context['isolation_concurrent'] when available.
  *
  * Context options:
  *   isolation_marker_field: string  — field name for injecting markers (default: auto-detect first string property)
  *   isolation_pairs: int            — number of A/B pairs for Category A (default: 3)
- *   isolation_concurrent: int       — number of parallel requests for Category C (default: 0, disabled)
  *   isolation_identity_field: string — response field that identifies auth user (default: 'email')
+ *   isolation_second_token: string  — auth token for a second user (enables Category B identity check)
  *   isolation_response_check: bool  — whether to check response body for markers (default: true)
  */
 final class CoroutineIsolationStrategy implements TestingStrategyInterface
@@ -232,25 +232,39 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
             ],
         );
 
-        // Request as User B (using invalid/different token to simulate different user)
-        // If only one valid token is available, we use the same token but with a different marker
-        // and check that the previous marker doesn't bleed into this response
+        // Request as User B — use a different token if available
+        $secondToken = $metadata->context['isolation_second_token'] ?? null;
+        if ($secondToken === null && method_exists($provider, 'secondValidToken')) {
+            $secondToken = $provider->secondValidToken();
+        }
+
+        // If no second token available, fall back to same token but still check marker bleed
+        $tokenB = $secondToken ?? $tokenA;
+        $headerValueB = $scheme !== '' ? "{$scheme} {$tokenB}" : $tokenB;
+
         $markerB = IsolationMarker::generate($markerFieldName);
         $bodyB = array_merge($baseline, [$markerFieldName => $markerB->id]);
+
+        $context = [
+            'isolation_role' => 'auth_user_b',
+            'marker' => $markerB->id,
+            'forbidden_marker' => $markerA->id,
+            'isolation_response_check' => $metadata->context['isolation_response_check'] ?? true,
+        ];
+
+        // Only check identity bleed when we have two distinct users
+        if ($secondToken !== null) {
+            $context['forbidden_identity'] = $identityMarkerA;
+        }
 
         yield new TestCaseDescriptor(
             description: "Auth isolation: Request as User B (must not contain marker {$markerA->id})",
             method: $method,
             path: $path,
-            headers: [$header => $headerValueA],
+            headers: [$header => $headerValueB],
             body: $bodyB,
             expectedStatus: [200, 201, 302, 422],
-            context: [
-                'isolation_role' => 'auth_user_b',
-                'marker' => $markerB->id,
-                'forbidden_marker' => $markerA->id,
-                'isolation_response_check' => $metadata->context['isolation_response_check'] ?? true,
-            ],
+            context: $context,
         );
     }
 

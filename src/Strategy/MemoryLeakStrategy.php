@@ -58,7 +58,9 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
             if ($metadata->context['security_skip_valid_token_check'] ?? false) {
                 return 'MemoryLeakStrategy skipped: endpoint requires auth but security_skip_valid_token_check is true.';
             }
-            return 'MemoryLeakStrategy skipped: endpoint requires auth but no auth_header/token_provider configured.';
+            if (!isset($metadata->context['auth_header'], $metadata->context['token_provider'])) {
+                return 'MemoryLeakStrategy skipped: endpoint requires auth but no auth_header/token_provider configured.';
+            }
         }
         return '';
     }
@@ -80,6 +82,7 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
                 'memory_leak_check' => true,
                 'iterations' => $iterations,
                 'warmup' => self::WARMUP_ITERATIONS,
+                'memory_leak_threshold_bytes' => (int) ($metadata->context['memory_leak_threshold_bytes'] ?? self::ALLOWED_GROWTH_BYTES),
             ]
         );
     }
@@ -88,7 +91,10 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
     {
         $stats = $response->context['memory_stats'] ?? null;
         if ($stats === null) {
-            return;
+            Assert::fail(
+                '[MemoryLeakStrategy] memory_stats not available in response context. '
+                . 'Use InProcessTransport for memory leak detection, or disable MemoryLeakStrategy.'
+            );
         }
 
         $baseline = $stats['baseline'] ?? 0;

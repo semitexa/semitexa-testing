@@ -45,6 +45,12 @@ final class ParanoiaProfileStrategy implements TestingProfileInterface
         return 'ParanoiaProfileStrategy is a profile.';
     }
 
-    public function generateCases(PayloadMetadata $metadata): iterable { return []; }
-    public function assertResponse(TestCaseDescriptor $case, ResponseResult $response): void {}
+    public function generateCases(PayloadMetadata $metadata): iterable
+    {
+        return [];
+    }
+
+    public function assertResponse(TestCaseDescriptor $case, ResponseResult $response): void
+    {
+    }
 }
