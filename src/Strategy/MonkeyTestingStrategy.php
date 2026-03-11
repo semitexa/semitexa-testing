@@ -39,7 +39,7 @@ final class MonkeyTestingStrategy implements TestingStrategyInterface
         $path = $metadata->path;
 
         yield new TestCaseDescriptor(
-            description: 'Huge JSON body (10 MB) → safe rejection',
+            description: 'Huge JSON body (~1 MB) → safe rejection',
             method: $method,
             path: $path,
             headers: ['Content-Type' => 'application/json'],

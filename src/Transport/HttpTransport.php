@@ -43,7 +43,13 @@ final class HttpTransport implements TransportInterface
                 ? json_encode($case->body, JSON_THROW_ON_ERROR)
                 : (string) $case->body;
             $opts[CURLOPT_POSTFIELDS] = $body;
-            $curlHeaders[] = 'Content-Type: application/json';
+            $hasContentType = array_filter(
+                array_keys($case->headers),
+                static fn(string $k): bool => strcasecmp($k, 'Content-Type') === 0,
+            );
+            if (empty($hasContentType)) {
+                $curlHeaders[] = 'Content-Type: application/json';
+            }
         }
 
         if ($curlHeaders) {

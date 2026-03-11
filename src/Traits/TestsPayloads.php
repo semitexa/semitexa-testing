@@ -40,6 +40,7 @@ trait TestsPayloads
         $reporter  = PhpUnitExtension::getReporter();
 
         $tester   = new PayloadContractTester($transport, $reporter);
+        PayloadMetadataFactory::clearCache();
         $metadata = PayloadMetadataFactory::create($payloadClass);
         $result   = $tester->run($metadata);
 
@@ -48,9 +49,19 @@ trait TestsPayloads
             fwrite(STDERR, "\n  [SKIP] " . basename(str_replace('\\', '/', $skipped->strategyClass)) . ": {$skipped->message}");
         }
 
-        // Fail on any strategy failure
-        foreach ($result->getFailures() as $failure) {
-            $this->fail($failure->message);
+        // Fail on any strategy failure (aggregate all into one message)
+        $failures = $result->getFailures();
+        if (count($failures) > 0) {
+            $messages = array_map(
+                static fn($f) => "[{$f->strategyClass}] {$f->message}",
+                $failures,
+            );
+            $this->fail(sprintf(
+                "%d failure(s) for %s:\n\n%s",
+                count($failures),
+                $payloadClass,
+                implode("\n\n", $messages),
+            ));
         }
 
         // Ensure PHPUnit counts the executed assertions
