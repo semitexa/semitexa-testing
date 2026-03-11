@@ -61,7 +61,7 @@ final class PhpUnitExtension implements Extension
                 throw new \RuntimeException(
                     'Failed to create InProcessTransport. Ensure PhpUnitExtension is configured in phpunit.xml '
                     . 'or that the application container is bootstrapped before running payload tests. '
-                    . $e->getMessage(),
+                    . 'Original error (' . \get_class($e) . '): ' . $e->getMessage(),
                     0,
                     $e,
                 );

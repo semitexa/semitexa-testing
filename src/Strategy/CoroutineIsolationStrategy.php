@@ -9,7 +9,7 @@ use Semitexa\Testing\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Contract\TestTokenProviderInterface;
 use Semitexa\Testing\Data\IsolationMarker;
 use Semitexa\Testing\Data\PayloadMetadata;
-use Semitexa\Testing\Data\PropertyMeta;
+
 use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
@@ -59,6 +59,10 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
             if (!isset($metadata->context['auth_header'], $metadata->context['token_provider'])) {
                 return false;
             }
+            $providerClass = $metadata->context['token_provider'];
+            if (!is_string($providerClass) || !class_exists($providerClass) || !is_subclass_of($providerClass, TestTokenProviderInterface::class)) {
+                return false;
+            }
         }
 
         return true;
@@ -76,7 +80,9 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
             if ($metadata->context['security_skip_valid_token_check'] ?? false) {
                 return 'CoroutineIsolationStrategy skipped: endpoint requires auth but security_skip_valid_token_check is true.';
             }
-            return 'CoroutineIsolationStrategy skipped: endpoint requires auth but no auth_header/token_provider configured.';
+            if (!isset($metadata->context['auth_header'], $metadata->context['token_provider'])) {
+                return 'CoroutineIsolationStrategy skipped: endpoint requires auth but no auth_header/token_provider configured.';
+            }
         }
         return '';
     }
@@ -208,10 +214,6 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
         /** @var TestTokenProviderInterface $provider */
         $provider = new $providerClass();
         $tokenA = $provider->validToken();
-        $identityField = $metadata->context['isolation_identity_field'] ?? 'email';
-
-        // Create a distinguishable marker for user A's identity
-        $identityMarkerA = 'ISOAUTH_' . bin2hex(random_bytes(4));
 
         $headerValueA = $scheme !== '' ? "{$scheme} {$tokenA}" : $tokenA;
 
@@ -252,10 +254,9 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
             'isolation_response_check' => $metadata->context['isolation_response_check'] ?? true,
         ];
 
-        // Only check identity bleed when we have two distinct users
-        if ($secondToken !== null) {
-            $context['forbidden_identity'] = $identityMarkerA;
-        }
+        // TODO: Identity bleed detection requires TestTokenProviderInterface to expose
+        // user identity (e.g. identityOf() method). Currently Category B only checks
+        // cross-request marker bleed between different auth contexts.
 
         yield new TestCaseDescriptor(
             description: "Auth isolation: Request as User B (must not contain marker {$markerA->id})",
@@ -270,10 +271,18 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
 
     private function findMarkerField(PayloadMetadata $metadata): ?string
     {
-        // User-specified field
+        // User-specified field — validate it exists and is a string property
         $explicit = $metadata->context['isolation_marker_field'] ?? null;
         if ($explicit !== null) {
-            return $explicit;
+            if (!is_string($explicit)) {
+                return null;
+            }
+            foreach ($metadata->properties as $prop) {
+                if ($prop->name === $explicit && $prop->type === 'string') {
+                    return $explicit;
+                }
+            }
+            return null;
         }
 
         // Auto-detect: first string property

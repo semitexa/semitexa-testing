@@ -45,6 +45,10 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
             if (!isset($metadata->context['auth_header'], $metadata->context['token_provider'])) {
                 return false;
             }
+            $providerClass = $metadata->context['token_provider'];
+            if (!is_string($providerClass) || !class_exists($providerClass) || !is_subclass_of($providerClass, TestTokenProviderInterface::class)) {
+                return false;
+            }
         }
         return true;
     }
@@ -89,6 +93,15 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
 
     public function assertResponse(TestCaseDescriptor $case, ResponseResult $response): void
     {
+        // Verify HTTP status before interpreting memory stats
+        if (is_array($case->expectedStatus)) {
+            Assert::assertContains(
+                $response->statusCode,
+                $case->expectedStatus,
+                "[MemoryLeakStrategy] {$case->description}: got status {$response->statusCode}."
+            );
+        }
+
         $stats = $response->context['memory_stats'] ?? null;
         if ($stats === null) {
             Assert::fail(
