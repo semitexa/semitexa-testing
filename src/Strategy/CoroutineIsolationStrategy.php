@@ -152,9 +152,11 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
             );
         }
 
-        // If both requests got 422, body may be a validation error — skip body check
+        // A 422 means the generated payload never exercised the target behavior.
         if ($response->statusCode === 422) {
-            return;
+            Assert::fail(
+                "[CoroutineIsolationStrategy] {$case->description}: generated payload was rejected with 422, so isolation was not verified."
+            );
         }
 
         $responseCheck = $case->context['isolation_response_check'] ?? true;
