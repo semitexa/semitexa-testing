@@ -7,7 +7,6 @@ namespace Semitexa\Testing\Factory;
 use ReflectionClass;
 use ReflectionNamedType;
 use Semitexa\Core\Attributes\AsPayload;
-use Semitexa\Core\Attributes\RequiresAuth;
 use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Attributes\TestablePayloadPart;
 use Semitexa\Testing\Data\PayloadMetadata;
@@ -15,6 +14,8 @@ use Semitexa\Testing\Data\PropertyMeta;
 
 final class PayloadMetadataFactory
 {
+    private const PUBLIC_ENDPOINT_ATTRIBUTE = 'Semitexa\\Authorization\\Attributes\\PublicEndpoint';
+
     /** @var array<class-string, PayloadMetadata> */
     private static array $cache = [];
 
@@ -35,8 +36,8 @@ final class PayloadMetadataFactory
         $path = $asPayload?->path ?? '/';
         $methods = $asPayload?->methods ?? ['GET'];
 
-        // --- #[RequiresAuth] ---
-        $requiresAuth = !empty($ref->getAttributes(RequiresAuth::class));
+        // --- #[PublicEndpoint] — walk class hierarchy (PHP attributes are not inherited) ---
+        $isPublic = self::hasPublicEndpoint($ref);
 
         // --- #[TestablePayload] ---
         $testableAttrs = $ref->getAttributes(TestablePayload::class);
@@ -54,7 +55,7 @@ final class PayloadMetadataFactory
             payloadClass: $payloadClass,
             path: $path,
             methods: $methods,
-            requiresAuth: $requiresAuth,
+            isPublic: $isPublic,
             properties: $properties,
             context: $context,
             strategies: $strategies,
@@ -67,6 +68,26 @@ final class PayloadMetadataFactory
     public static function clearCache(): void
     {
         self::$cache = [];
+    }
+
+    /**
+     * Walk the class hierarchy to find #[PublicEndpoint].
+     * PHP attributes are not inherited, so parent classes must be checked explicitly.
+     */
+    private static function hasPublicEndpoint(ReflectionClass $ref): bool
+    {
+        if (!class_exists(self::PUBLIC_ENDPOINT_ATTRIBUTE)) {
+            return false;
+        }
+
+        $current = $ref;
+        while ($current !== false) {
+            if ($current->getAttributes(self::PUBLIC_ENDPOINT_ATTRIBUTE) !== []) {
+                return true;
+            }
+            $current = $current->getParentClass();
+        }
+        return false;
     }
 
     /**

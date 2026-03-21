@@ -89,7 +89,7 @@ trait TestsPayloads
         echo "\n=== Coverage: {$payloadClass} ===\n";
         echo sprintf("  Path:         %s\n", $metadata->path);
         echo sprintf("  Methods:      %s\n", implode(', ', $metadata->methods));
-        echo sprintf("  RequiresAuth: %s\n", $metadata->requiresAuth ? 'yes' : 'no');
+        echo sprintf("  Access:       %s\n", $metadata->isPublic ? 'public' : 'protected');
         echo sprintf("  Strategies:   %s\n", implode(', ', array_map(
             fn($c) => basename(str_replace('\\', '/', $c)),
             $metadata->strategies,
