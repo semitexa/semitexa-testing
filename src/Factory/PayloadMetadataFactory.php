@@ -6,7 +6,6 @@ namespace Semitexa\Testing\Factory;
 
 use ReflectionClass;
 use ReflectionNamedType;
-use Semitexa\Authorization\Attributes\PublicEndpoint;
 use Semitexa\Core\Attributes\AsPayload;
 use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Attributes\TestablePayloadPart;
@@ -15,6 +14,8 @@ use Semitexa\Testing\Data\PropertyMeta;
 
 final class PayloadMetadataFactory
 {
+    private const PUBLIC_ENDPOINT_ATTRIBUTE = 'Semitexa\\Authorization\\Attributes\\PublicEndpoint';
+
     /** @var array<class-string, PayloadMetadata> */
     private static array $cache = [];
 
@@ -75,9 +76,13 @@ final class PayloadMetadataFactory
      */
     private static function hasPublicEndpoint(ReflectionClass $ref): bool
     {
+        if (!class_exists(self::PUBLIC_ENDPOINT_ATTRIBUTE)) {
+            return false;
+        }
+
         $current = $ref;
         while ($current !== false) {
-            if ($current->getAttributes(PublicEndpoint::class) !== []) {
+            if ($current->getAttributes(self::PUBLIC_ENDPOINT_ATTRIBUTE) !== []) {
                 return true;
             }
             $current = $current->getParentClass();
