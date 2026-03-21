@@ -41,6 +41,9 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
 
     public function canRun(PayloadMetadata $metadata): bool
     {
+        if (($metadata->context['skip_coroutine_isolation'] ?? false) === true) {
+            return false;
+        }
         // Need at least one string property for marker injection
         if ($this->findMarkerField($metadata) === null) {
             return false;
@@ -70,6 +73,9 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
 
     public function skipReason(PayloadMetadata $metadata): string
     {
+        if (($metadata->context['skip_coroutine_isolation'] ?? false) === true) {
+            return 'CoroutineIsolationStrategy skipped by payload context.';
+        }
         if ($this->findMarkerField($metadata) === null) {
             return 'CoroutineIsolationStrategy skipped: no string property found for marker injection.';
         }
@@ -339,6 +345,11 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
     /** Build baseline body with valid values for all known-type properties. */
     private function buildBaseline(PayloadMetadata $metadata): array
     {
+        $validBody = $metadata->context['valid_body'] ?? null;
+        if (is_array($validBody)) {
+            return $validBody;
+        }
+
         $baseline = [
             'int' => 1,
             'float' => 1.0,
