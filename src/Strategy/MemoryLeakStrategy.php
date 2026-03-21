@@ -38,6 +38,9 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
         if (($metadata->context['skip_memory_leak'] ?? false) === true) {
             return false;
         }
+        if ($this->usesFixedValidBodyOnWriteEndpoint($metadata)) {
+            return false;
+        }
         if (empty($metadata->methods)) {
             return false;
         }
@@ -60,6 +63,9 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
     {
         if (($metadata->context['skip_memory_leak'] ?? false) === true) {
             return 'MemoryLeakStrategy skipped by payload context.';
+        }
+        if ($this->usesFixedValidBodyOnWriteEndpoint($metadata)) {
+            return 'MemoryLeakStrategy skipped: write endpoints with fixed valid_body replay the same request across iterations and can produce duplicate-validation false positives.';
         }
         if (empty($metadata->methods)) {
             return 'No HTTP methods defined for payload.';
@@ -167,5 +173,16 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
         }
 
         return is_array($baseline) ? $baseline : null;
+    }
+
+    private function usesFixedValidBodyOnWriteEndpoint(PayloadMetadata $metadata): bool
+    {
+        $validBody = $metadata->context['valid_body'] ?? null;
+        if (!is_array($validBody)) {
+            return false;
+        }
+
+        $methods = array_map('strtoupper', $metadata->methods);
+        return !empty(array_intersect(['POST', 'PUT', 'PATCH'], $methods));
     }
 }
