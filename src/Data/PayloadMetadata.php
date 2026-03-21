@@ -11,8 +11,14 @@ namespace Semitexa\Testing\Data;
  * Business constraints encoded in validate() method bodies (min/max length, email
  * format, enum values) are NOT captured here. Strategies operate on type-level only.
  */
-final readonly class PayloadMetadata
+final class PayloadMetadata
 {
+    /**
+     * Derived field: protected endpoints require authentication.
+     * Under the authorization model, requiresAuth === !isPublic.
+     */
+    public readonly bool $requiresAuth;
+
     /**
      * @param class-string                                $payloadClass
      * @param list<string>                                $methods       Allowed HTTP methods from #[AsPayload]
@@ -21,12 +27,14 @@ final readonly class PayloadMetadata
      * @param list<class-string<\Semitexa\Testing\Contract\TestingStrategyInterface>> $strategies Merged (payload + parts), deduplicated
      */
     public function __construct(
-        public string $payloadClass,
-        public string $path,
-        public array $methods,
-        public bool $requiresAuth,
-        public array $properties,
-        public array $context,
-        public array $strategies,
-    ) {}
+        public readonly string $payloadClass,
+        public readonly string $path,
+        public readonly array $methods,
+        public readonly bool $isPublic,
+        public readonly array $properties,
+        public readonly array $context,
+        public readonly array $strategies,
+    ) {
+        $this->requiresAuth = !$isPublic;
+    }
 }
