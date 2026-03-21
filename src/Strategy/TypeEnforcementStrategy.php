@@ -170,11 +170,6 @@ final class TypeEnforcementStrategy implements TestingStrategyInterface
     /** Build a baseline body with valid values for all known-type properties. */
     private function buildBaseline(PayloadMetadata $metadata): array
     {
-        $validBody = $metadata->context['valid_body'] ?? null;
-        if (is_array($validBody)) {
-            return $validBody;
-        }
-
         $body = [];
         foreach ($metadata->properties as $prop) {
             if ($prop->hasDefault) {
@@ -183,6 +178,12 @@ final class TypeEnforcementStrategy implements TestingStrategyInterface
                 $body[$prop->name] = self::BASELINE[$prop->type];
             }
         }
+
+        $validBody = $metadata->context['valid_body'] ?? null;
+        if (is_array($validBody)) {
+            return array_merge($body, $validBody);
+        }
+
         return $body;
     }
 
