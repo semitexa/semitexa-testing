@@ -35,6 +35,9 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
 
     public function canRun(PayloadMetadata $metadata): bool
     {
+        if (($metadata->context['skip_memory_leak'] ?? false) === true) {
+            return false;
+        }
         if (empty($metadata->methods)) {
             return false;
         }
@@ -55,6 +58,9 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
 
     public function skipReason(PayloadMetadata $metadata): string
     {
+        if (($metadata->context['skip_memory_leak'] ?? false) === true) {
+            return 'MemoryLeakStrategy skipped by payload context.';
+        }
         if (empty($metadata->methods)) {
             return 'No HTTP methods defined for payload.';
         }
@@ -74,13 +80,14 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
         $method = $metadata->methods[0] ?? 'GET';
         $iterations = (int) ($metadata->context['memory_leak_iterations'] ?? self::ITERATIONS);
         $headers = $this->getAuthHeaders($metadata);
+        $body = $this->buildBaseline($metadata);
 
         yield new TestCaseDescriptor(
             description: "Memory stability check ({$iterations} iterations)",
             method: $method,
             path: $metadata->path,
             headers: $headers,
-            body: null,
+            body: $body,
             expectedStatus: [200, 201, 302, 401, 403],
             context: [
                 'memory_leak_check' => true,
@@ -150,5 +157,15 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
         $value = $scheme !== '' ? "{$scheme} {$token}" : $token;
 
         return [$header => $value];
+    }
+
+    private function buildBaseline(PayloadMetadata $metadata): ?array
+    {
+        $baseline = $metadata->context['valid_body'] ?? null;
+        if ($baseline === null) {
+            return null;
+        }
+
+        return is_array($baseline) ? $baseline : null;
     }
 }
