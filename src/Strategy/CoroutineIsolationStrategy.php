@@ -11,6 +11,7 @@ use Semitexa\Testing\Data\IsolationMarker;
 use Semitexa\Testing\Data\PayloadMetadata;
 
 use Semitexa\Testing\Data\ResponseResult;
+use Semitexa\Core\Http\HttpStatus;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
 /**
@@ -117,7 +118,7 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
                 path: $path,
                 headers: $headers,
                 body: $bodyA,
-                expectedStatus: [200, 201, 302, 422],
+                expectedStatus: [HttpStatus::Ok->value, HttpStatus::Created->value, HttpStatus::Found->value, HttpStatus::UnprocessableEntity->value],
                 context: [
                     'isolation_role' => 'request_a',
                     'marker' => $markerA->id,
@@ -131,7 +132,7 @@ final class CoroutineIsolationStrategy implements TestingStrategyInterface
                 path: $path,
                 headers: $headers,
                 body: $bodyB,
-                expectedStatus: [200, 201, 302, 422],
+                expectedStatus: [HttpStatus::Ok->value, HttpStatus::Created->value, HttpStatus::Found->value, HttpStatus::UnprocessableEntity->value],
                 context: [
                     'isolation_role' => 'request_b',
                     'marker' => $markerB->id,

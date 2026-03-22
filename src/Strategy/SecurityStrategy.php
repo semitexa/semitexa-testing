@@ -9,6 +9,7 @@ use Semitexa\Testing\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Contract\TestTokenProviderInterface;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\ResponseResult;
+use Semitexa\Core\Http\HttpStatus;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
 /**
@@ -72,7 +73,7 @@ final class SecurityStrategy implements TestingStrategyInterface
             path: $path,
             headers: [],
             body: null,
-            expectedStatus: 401,
+            expectedStatus: HttpStatus::Unauthorized->value,
         );
 
         yield new TestCaseDescriptor(
@@ -81,7 +82,7 @@ final class SecurityStrategy implements TestingStrategyInterface
             path: $path,
             headers: [$header => $this->buildHeaderValue($scheme, 'INVALID_TOKEN_FORMAT_XYZ')],
             body: null,
-            expectedStatus: 401,
+            expectedStatus: HttpStatus::Unauthorized->value,
         );
 
         yield new TestCaseDescriptor(
@@ -90,7 +91,7 @@ final class SecurityStrategy implements TestingStrategyInterface
             path: $path,
             headers: [$header => $this->buildHeaderValue($scheme, $provider->invalidToken())],
             body: null,
-            expectedStatus: 401,
+            expectedStatus: HttpStatus::Unauthorized->value,
         );
 
         yield new TestCaseDescriptor(
@@ -99,7 +100,7 @@ final class SecurityStrategy implements TestingStrategyInterface
             path: $path,
             headers: [$header => $this->buildHeaderValue($scheme, $provider->expiredToken())],
             body: null,
-            expectedStatus: 401,
+            expectedStatus: HttpStatus::Unauthorized->value,
         );
 
         // Sanity check: valid token should NOT get 401.
@@ -112,7 +113,7 @@ final class SecurityStrategy implements TestingStrategyInterface
                 path: $path,
                 headers: [$header => $this->buildHeaderValue($scheme, $provider->validToken())],
                 body: null,
-                expectedStatus: array_values(array_diff(range(100, 599), [401])),
+                expectedStatus: array_values(array_diff(range(100, 599), [HttpStatus::Unauthorized->value])),
             );
         }
     }
