@@ -9,6 +9,7 @@ use Semitexa\Testing\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Contract\TestTokenProviderInterface;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\ResponseResult;
+use Semitexa\Core\Http\HttpStatus;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
 /**
@@ -94,7 +95,7 @@ final class MemoryLeakStrategy implements TestingStrategyInterface
             path: $metadata->path,
             headers: $headers,
             body: $body,
-            expectedStatus: [200, 201, 302, 401, 403],
+            expectedStatus: [HttpStatus::Ok->value, HttpStatus::Created->value, HttpStatus::Found->value, HttpStatus::Unauthorized->value, HttpStatus::Forbidden->value],
             context: [
                 'memory_leak_check' => true,
                 'iterations' => $iterations,

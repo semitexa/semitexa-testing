@@ -8,6 +8,7 @@ use PHPUnit\Framework\Assert;
 use Semitexa\Testing\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\ResponseResult;
+use Semitexa\Core\Http\HttpStatus;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
 /**
@@ -21,7 +22,7 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  */
 final class MonkeyTestingStrategy implements TestingStrategyInterface
 {
-    private const DEFAULT_REJECT = [500, 502, 503, 504];
+    private const DEFAULT_REJECT = [HttpStatus::InternalServerError->value, HttpStatus::BadGateway->value, HttpStatus::ServiceUnavailable->value, HttpStatus::GatewayTimeout->value];
 
     public function canRun(PayloadMetadata $metadata): bool
     {

@@ -9,6 +9,7 @@ use Semitexa\Testing\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\PropertyMeta;
 use Semitexa\Testing\Data\ResponseResult;
+use Semitexa\Core\Http\HttpStatus;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
 /**
@@ -93,7 +94,7 @@ final class TypeEnforcementStrategy implements TestingStrategyInterface
                 path: $path,
                 headers: $headers,
                 body: $body,
-                expectedStatus: 422,
+                expectedStatus: HttpStatus::UnprocessableEntity->value,
             );
         }
 
@@ -114,7 +115,7 @@ final class TypeEnforcementStrategy implements TestingStrategyInterface
                         path: $path,
                         headers: $headers,
                         body: $body,
-                        expectedStatus: 422,
+                        expectedStatus: HttpStatus::UnprocessableEntity->value,
                     );
                 }
             }
