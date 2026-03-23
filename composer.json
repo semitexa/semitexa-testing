@@ -1,6 +1,6 @@
 {
     "name": "semitexa/testing",
-    "description": "Automated payload contract testing for Semitexa Framework",
+    "description": "Semitexa Testing - automated payload and contract testing utilities for applications",
     "version": "1.0.7",
     "type": "library",
     "license": "MIT",
@@ -24,6 +24,9 @@
     },
     "keywords": [
         "semitexa",
-        "testing"
+        "testing",
+        "contracts",
+        "payloads",
+        "phpunit"
     ]
 }
