@@ -1,7 +1,7 @@
 {
     "name": "semitexa/testing",
     "description": "Semitexa Testing - automated payload and contract testing utilities for applications",
-    "version": "1.0.7",
+    "version": "v1.0.9",
     "type": "library",
     "license": "MIT",
     "authors": [
