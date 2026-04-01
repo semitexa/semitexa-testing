@@ -79,20 +79,29 @@ class ProjectPayloadsContractTest extends TestCase
 
     /**
      * @dataProvider provideTestablePayloads
-     * @param class-string $payloadClass
+     * @param class-string|null $payloadClass
      */
-    public function test_payload_follows_contract(string $payloadClass): void
+    public function test_payload_follows_contract(?string $payloadClass): void
     {
+        if ($payloadClass === null) {
+            $this->markTestSkipped('No payload classes are currently marked with #[TestablePayload].');
+        }
+
         $this->assertPayloadContract($payloadClass);
     }
 
     /**
-     * @return iterable<string, array{0: class-string}>
+     * @return iterable<string, array{0: class-string|null}>
      */
     public static function provideTestablePayloads(): iterable
     {
         ClassDiscovery::initialize();
         $payloads = ClassDiscovery::findClassesWithAttribute(TestablePayload::class);
+
+        if ($payloads === []) {
+            yield 'no testable payloads registered' => [null];
+            return;
+        }
 
         foreach ($payloads as $class) {
             $shortName = (new \ReflectionClass($class))->getShortName();
