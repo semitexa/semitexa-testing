@@ -1,4 +1,4 @@
-# semitexa/testing
+# Semitexa Testing
 
 Automated payload contract testing with strategy-based validation and multiple test profiles.
 
