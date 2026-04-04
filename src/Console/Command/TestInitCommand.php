@@ -63,7 +63,6 @@ declare(strict_types=1);
 namespace App\Tests\Payload;
 
 use PHPUnit\Framework\TestCase;
-use Semitexa\Core\Container\ContainerFactory;
 use Semitexa\Core\Discovery\ClassDiscovery;
 use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Traits\TestsPayloads;
@@ -96,8 +95,7 @@ class ProjectPayloadsContractTest extends TestCase
      */
     public static function provideTestablePayloads(): iterable
     {
-        /** @var ClassDiscovery $classDiscovery */
-        $classDiscovery = ContainerFactory::get()->get(ClassDiscovery::class);
+        $classDiscovery = new ClassDiscovery();
         $payloads = $classDiscovery->findClassesWithAttribute(TestablePayload::class);
 
         if ($payloads === []) {
