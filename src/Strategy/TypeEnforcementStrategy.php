@@ -19,7 +19,7 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  *   1. Missing required fields (non-nullable, no default) → 422
  *   2. Wrong type mutations (string sent for int, array sent for string, etc.) → 422
  *
- * Family 2 requires InProcessTransport with strict mode enabled in RequestDtoHydrator.
+ * Family 2 requires InProcessTransport with strict mode enabled in PayloadHydrator.
  * The InProcessTransport enables strict mode automatically; this strategy always runs.
  *
  * Mutation mode can be disabled via context: ['type_mutation' => false]

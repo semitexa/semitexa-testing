@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Console\Command;
 
-use Semitexa\Core\Attributes\AsCommand;
+use Semitexa\Core\Attribute\AsCommand;
 use Semitexa\Core\Console\Command\BaseCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -95,8 +95,8 @@ class ProjectPayloadsContractTest extends TestCase
      */
     public static function provideTestablePayloads(): iterable
     {
-        ClassDiscovery::initialize();
-        $payloads = ClassDiscovery::findClassesWithAttribute(TestablePayload::class);
+        $classDiscovery = new ClassDiscovery();
+        $payloads = $classDiscovery->findClassesWithAttribute(TestablePayload::class);
 
         if ($payloads === []) {
             yield 'no testable payloads registered' => [null];

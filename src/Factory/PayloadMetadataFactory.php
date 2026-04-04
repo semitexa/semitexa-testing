@@ -6,7 +6,7 @@ namespace Semitexa\Testing\Factory;
 
 use ReflectionClass;
 use ReflectionNamedType;
-use Semitexa\Core\Attributes\AsPayload;
+use Semitexa\Core\Attribute\AsPayload;
 use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Attributes\TestablePayloadPart;
 use Semitexa\Testing\Data\PayloadMetadata;
@@ -154,7 +154,7 @@ final class PayloadMetadataFactory
      *   1. Setter methods (set{Foo}(TypeHint $foo)) — primary source, covers protected/private DTO props.
      *   2. Public properties — for DTOs that expose fields directly.
      *
-     * Setter-based names match the hydrator convention (RequestDtoHydrator::keyToSetterName):
+     * Setter-based names match the hydrator convention (PayloadHydrator::keyToSetterName):
      *   setEmail(string $email) → field name 'email', type 'string'
      *   setFirstName(string $firstName) → field name 'firstName'
      *

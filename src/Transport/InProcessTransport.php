@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Semitexa\Testing\Transport;
 
 use Semitexa\Core\Application;
-use Semitexa\Core\Http\RequestDtoHydrator;
+use Semitexa\Core\Http\PayloadHydrator;
 use Semitexa\Core\Request;
 use Semitexa\Testing\Contract\TransportInterface;
 use Semitexa\Testing\Data\ResponseResult;
@@ -17,7 +17,7 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  * No network, no Swoole coroutine conflicts.
  * Enables strict hydration mode for the duration of each request.
  *
- * WARNING: RequestDtoHydrator::$strictTypes is a worker-global static flag.
+ * WARNING: PayloadHydrator::$strictTypes is a worker-global static flag.
  * This transport is only safe in single-process PHPUnit CLI.
  * Never use InProcessTransport inside a Swoole worker with concurrent coroutines.
  *
@@ -34,59 +34,64 @@ final class InProcessTransport implements TransportInterface
         $isMemoryCheck = (bool) ($case->context['memory_leak_check'] ?? false);
 
         if ($isMemoryCheck) {
-            $warmup = (int) ($case->context['warmup'] ?? 5);
-            $iterations = (int) ($case->context['iterations'] ?? 20);
+            $warmup = $this->intContext($case, 'warmup', 5);
+            $iterations = $this->intContext($case, 'iterations', 20);
 
-            // 1. Warm up
-            for ($i = 0; $i < $warmup; $i++) {
-                $this->application->handleRequest($this->buildRequest($case));
+            PayloadHydrator::enableStrictMode(true);
+            try {
+                // 1. Warm up
+                for ($i = 0; $i < $warmup; $i++) {
+                    $this->application->handleRequest($this->buildRequest($case));
+                    $this->application->requestScopedContainer->reset();
+                }
+
+                gc_collect_cycles();
+                $baseline = memory_get_usage();
+
+                // 2. Iterations
+                for ($i = 0; $i < $iterations; $i++) {
+                    $this->application->handleRequest($this->buildRequest($case));
+                    $this->application->requestScopedContainer->reset();
+                }
+
+                gc_collect_cycles();
+                $final = memory_get_usage();
+
+                // Final check response (the last one)
+                $response = $this->application->handleRequest($request);
                 $this->application->requestScopedContainer->reset();
+            } finally {
+                PayloadHydrator::enableStrictMode(false);
             }
-
-            gc_collect_cycles();
-            $baseline = memory_get_usage();
-
-            // 2. Iterations
-            for ($i = 0; $i < $iterations; $i++) {
-                $this->application->handleRequest($this->buildRequest($case));
-                $this->application->requestScopedContainer->reset();
-            }
-
-            gc_collect_cycles();
-            $final = memory_get_usage();
-
-            // Final check response (the last one)
-            $response = $this->application->handleRequest($request);
-            $this->application->requestScopedContainer->reset();
 
             return new ResponseResult(
                 statusCode: $response->statusCode,
-                headers: $response->headers,
+                headers: $this->normalizeHeaders($response->headers),
                 body: $response->content,
                 durationMs: 0,
                 context: [
                     'memory_stats' => [
                         'baseline' => $baseline,
                         'final' => $final,
-                        'iterations' => $iterations
-                    ]
-                ]
+                        'iterations' => $iterations,
+                    ],
+                ],
             );
         }
 
-        RequestDtoHydrator::enableStrictMode(true);
+        PayloadHydrator::enableStrictMode(true);
         $start = microtime(true);
         try {
             $response = $this->application->handleRequest($request);
         } finally {
-            RequestDtoHydrator::enableStrictMode(false);
+            PayloadHydrator::enableStrictMode(false);
             $this->application->requestScopedContainer->reset();
         }
         $durationMs = (microtime(true) - $start) * 1000;
 
         return new ResponseResult(
             statusCode: $response->statusCode,
-            headers: $response->headers,
+            headers: $this->normalizeHeaders($response->headers),
             body: $response->content,
             durationMs: round($durationMs, 2),
         );
@@ -95,6 +100,8 @@ final class InProcessTransport implements TransportInterface
     /**
      * Parse "Cookie: name=value; name2=value2" into ['name' => 'value', 'name2' => 'value2'].
      * Application reads session ID via $request->getCookie(), not from raw headers.
+     *
+     * @return array<string, string>
      */
     private function parseCookieHeader(string $header): array
     {
@@ -127,8 +134,19 @@ final class InProcessTransport implements TransportInterface
                 if (is_array($case->body)) {
                     // Use JSON_INVALID_UTF8_SUBSTITUTE to allow encoding of chaotic data without throwing JsonException.
                     $content = json_encode($case->body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
-                } else {
+                    if ($content === false) {
+                        throw new \RuntimeException('Failed to encode request body as JSON.');
+                    }
+                } elseif (is_scalar($case->body) || $case->body instanceof \Stringable) {
                     $content = (string) $case->body;
+                } else {
+                    $content = json_encode(
+                        $case->body,
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+                    );
+                    if ($content === false) {
+                        throw new \RuntimeException('Failed to encode non-scalar request body as JSON.');
+                    }
                 }
                 $headers['Content-Type'] ??= 'application/json';
             } elseif ($method === 'GET' && is_array($case->body)) {
@@ -144,8 +162,49 @@ final class InProcessTransport implements TransportInterface
             query: $query,
             post: $post,
             server: [],
-            cookies: $this->parseCookieHeader($headers['Cookie'] ?? ''),
+            cookies: $this->parseCookieHeader(isset($headers['Cookie']) ? (string) $headers['Cookie'] : ''),
             content: $content,
         );
+    }
+
+    private function intContext(TestCaseDescriptor $case, string $key, int $default): int
+    {
+        $value = $case->context[$key] ?? $default;
+        return is_int($value) ? $value : $default;
+    }
+
+    /**
+     * @param array<mixed> $headers
+     * @return array<string, string|string[]>
+     */
+    private function normalizeHeaders(array $headers): array
+    {
+        $normalized = [];
+
+        foreach ($headers as $name => $value) {
+            if (!is_string($name)) {
+                continue;
+            }
+
+            if (is_string($value)) {
+                $normalized[$name] = $value;
+                continue;
+            }
+
+            if (!is_array($value)) {
+                continue;
+            }
+
+            $strings = [];
+            foreach ($value as $item) {
+                if (is_string($item)) {
+                    $strings[] = $item;
+                }
+            }
+
+            $normalized[$name] = $strings;
+        }
+
+        return $normalized;
     }
 }
