@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Semitexa\Testing\Transport;
 
 use Semitexa\Core\Application;
-use Semitexa\Core\Http\RequestDtoHydrator;
+use Semitexa\Core\Http\PayloadHydrator;
 use Semitexa\Core\Request;
 use Semitexa\Testing\Contract\TransportInterface;
 use Semitexa\Testing\Data\ResponseResult;
@@ -17,7 +17,7 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  * No network, no Swoole coroutine conflicts.
  * Enables strict hydration mode for the duration of each request.
  *
- * WARNING: RequestDtoHydrator::$strictTypes is a worker-global static flag.
+ * WARNING: PayloadHydrator::$strictTypes is a worker-global static flag.
  * This transport is only safe in single-process PHPUnit CLI.
  * Never use InProcessTransport inside a Swoole worker with concurrent coroutines.
  *
@@ -74,12 +74,12 @@ final class InProcessTransport implements TransportInterface
             );
         }
 
-        RequestDtoHydrator::enableStrictMode(true);
+        PayloadHydrator::enableStrictMode(true);
         $start = microtime(true);
         try {
             $response = $this->application->handleRequest($request);
         } finally {
-            RequestDtoHydrator::enableStrictMode(false);
+            PayloadHydrator::enableStrictMode(false);
             $this->application->requestScopedContainer->reset();
         }
         $durationMs = (microtime(true) - $start) * 1000;

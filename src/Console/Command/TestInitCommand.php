@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Console\Command;
 
-use Semitexa\Core\Attributes\AsCommand;
+use Semitexa\Core\Attribute\AsCommand;
 use Semitexa\Core\Console\Command\BaseCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -63,6 +63,7 @@ declare(strict_types=1);
 namespace App\Tests\Payload;
 
 use PHPUnit\Framework\TestCase;
+use Semitexa\Core\Container\ContainerFactory;
 use Semitexa\Core\Discovery\ClassDiscovery;
 use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Traits\TestsPayloads;
@@ -95,8 +96,9 @@ class ProjectPayloadsContractTest extends TestCase
      */
     public static function provideTestablePayloads(): iterable
     {
-        ClassDiscovery::initialize();
-        $payloads = ClassDiscovery::findClassesWithAttribute(TestablePayload::class);
+        /** @var ClassDiscovery $classDiscovery */
+        $classDiscovery = ContainerFactory::get()->get(ClassDiscovery::class);
+        $payloads = $classDiscovery->findClassesWithAttribute(TestablePayload::class);
 
         if ($payloads === []) {
             yield 'no testable payloads registered' => [null];
