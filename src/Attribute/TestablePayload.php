@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Attributes;
+namespace Semitexa\Testing\Attribute;
 
 use Attribute;
 
