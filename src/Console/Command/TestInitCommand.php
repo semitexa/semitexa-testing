@@ -64,7 +64,7 @@ namespace App\Tests\Payload;
 
 use PHPUnit\Framework\TestCase;
 use Semitexa\Core\Discovery\ClassDiscovery;
-use Semitexa\Testing\Attributes\TestablePayload;
+use Semitexa\Testing\Attribute\TestablePayload;
 use Semitexa\Testing\Traits\TestsPayloads;
 
 /**
