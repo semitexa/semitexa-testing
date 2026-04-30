@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing;
 
-use Semitexa\Testing\Contract\TestingProfileInterface;
-use Semitexa\Testing\Contract\TestingStrategyInterface;
-use Semitexa\Testing\Contract\TransportInterface;
+use Semitexa\Testing\Domain\Contract\TestingProfileInterface;
+use Semitexa\Testing\Domain\Contract\TestingStrategyInterface;
+use Semitexa\Testing\Domain\Contract\TransportInterface;
 use Semitexa\Testing\Data\ContractTestResult;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\StrategyResult;

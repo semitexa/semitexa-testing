@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing;
 
-use Semitexa\Testing\Contract\TestingStrategyInterface;
+use Semitexa\Testing\Domain\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Testing\Data\TestCaseDescriptor;

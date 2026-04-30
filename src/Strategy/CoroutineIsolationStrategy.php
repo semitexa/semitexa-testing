@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Semitexa\Testing\Strategy;
 
 use PHPUnit\Framework\Assert;
-use Semitexa\Testing\Contract\TestingStrategyInterface;
-use Semitexa\Testing\Contract\TestTokenProviderInterface;
+use Semitexa\Testing\Domain\Contract\TestingStrategyInterface;
+use Semitexa\Testing\Domain\Contract\TestTokenProviderInterface;
 use Semitexa\Testing\Data\IsolationMarker;
 use Semitexa\Testing\Data\PayloadMetadata;
 

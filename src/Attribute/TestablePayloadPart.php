@@ -27,7 +27,7 @@ use Attribute;
 final class TestablePayloadPart
 {
     /**
-     * @param list<class-string<\Semitexa\Testing\Contract\TestingStrategyInterface>> $strategies
+     * @param list<class-string<\Semitexa\Testing\Domain\Contract\TestingStrategyInterface>> $strategies
      */
     public function __construct(
         public readonly array $strategies = [],

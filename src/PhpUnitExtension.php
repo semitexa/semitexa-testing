@@ -9,7 +9,7 @@ use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
 use PHPUnit\TextUI\Configuration\Configuration;
 use Semitexa\Core\Application;
-use Semitexa\Testing\Contract\TransportInterface;
+use Semitexa\Testing\Domain\Contract\TransportInterface;
 use Semitexa\Testing\Transport\HttpTransport;
 use Semitexa\Testing\Transport\InProcessTransport;
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Semitexa\Testing\Strategy;
 
 use PHPUnit\Framework\Assert;
-use Semitexa\Testing\Contract\TestingStrategyInterface;
+use Semitexa\Testing\Domain\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Core\Http\HttpStatus;

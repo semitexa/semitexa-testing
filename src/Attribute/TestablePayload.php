@@ -33,7 +33,7 @@ use Attribute;
 final class TestablePayload
 {
     /**
-     * @param list<class-string<\Semitexa\Testing\Contract\TestingStrategyInterface>> $strategies
+     * @param list<class-string<\Semitexa\Testing\Domain\Contract\TestingStrategyInterface>> $strategies
      * @param array<string, mixed> $context  Per-strategy configuration (auth tokens, flags, etc.)
      */
     public function __construct(

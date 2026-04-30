@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Contract;
+namespace Semitexa\Testing\Domain\Contract;
 
 use Semitexa\Testing\Data\PayloadMetadata;
 

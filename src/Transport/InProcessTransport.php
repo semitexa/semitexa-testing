@@ -7,7 +7,7 @@ namespace Semitexa\Testing\Transport;
 use Semitexa\Core\Application;
 use Semitexa\Core\Http\PayloadHydrator;
 use Semitexa\Core\Request;
-use Semitexa\Testing\Contract\TransportInterface;
+use Semitexa\Testing\Domain\Contract\TransportInterface;
 use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Transport;
 
-use Semitexa\Testing\Contract\TransportInterface;
+use Semitexa\Testing\Domain\Contract\TransportInterface;
 use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 

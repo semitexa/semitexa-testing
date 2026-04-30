@@ -24,7 +24,7 @@ final class PayloadMetadata
      * @param list<string>                                $methods       Allowed HTTP methods from #[AsPayload]
      * @param list<PropertyMeta>                          $properties    Reflected public properties
      * @param array<string, mixed>                        $context       Raw context from #[TestablePayload]
-     * @param list<class-string<\Semitexa\Testing\Contract\TestingStrategyInterface>> $strategies Merged (payload + parts), deduplicated
+     * @param list<class-string<\Semitexa\Testing\Domain\Contract\TestingStrategyInterface>> $strategies Merged (payload + parts), deduplicated
      */
     public function __construct(
         public readonly string $payloadClass,
