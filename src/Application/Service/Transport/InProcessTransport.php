@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Transport;
+namespace Semitexa\Testing\Application\Service\Transport;
 
 use Semitexa\Core\Application;
 use Semitexa\Core\Http\PayloadHydrator;
 use Semitexa\Core\Request;
 use Semitexa\Testing\Domain\Contract\TransportInterface;
-use Semitexa\Testing\Data\ResponseResult;
-use Semitexa\Testing\Data\TestCaseDescriptor;
+use Semitexa\Testing\Domain\Model\ResponseResult;
+use Semitexa\Testing\Domain\Model\TestCaseDescriptor;
 
 /**
  * Dispatches test requests directly through Application::handleRequest().

@@ -65,7 +65,7 @@ namespace App\Tests\Payload;
 use PHPUnit\Framework\TestCase;
 use Semitexa\Core\Discovery\ClassDiscovery;
 use Semitexa\Testing\Attribute\TestablePayload;
-use Semitexa\Testing\Traits\TestsPayloads;
+use Semitexa\Testing\Application\Service\TestsPayloads;
 
 /**
  * Universal Contract Test: Automatically discovers and verifies ALL payloads

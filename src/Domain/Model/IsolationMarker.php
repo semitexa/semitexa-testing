@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Data;
+namespace Semitexa\Testing\Domain\Model;
 
 /**
  * Unique marker injected into request payloads for cross-request isolation verification.

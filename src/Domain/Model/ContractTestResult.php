@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Data;
+namespace Semitexa\Testing\Domain\Model;
+
+use Semitexa\Testing\Domain\Enum\StrategyResultStatus;
 
 final class ContractTestResult
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing;
+namespace Semitexa\Testing\Application\Service;
 
 use PHPUnit\Runner\Extension\Extension;
 use PHPUnit\Runner\Extension\Facade;
@@ -10,8 +10,8 @@ use PHPUnit\Runner\Extension\ParameterCollection;
 use PHPUnit\TextUI\Configuration\Configuration;
 use Semitexa\Core\Application;
 use Semitexa\Testing\Domain\Contract\TransportInterface;
-use Semitexa\Testing\Transport\HttpTransport;
-use Semitexa\Testing\Transport\InProcessTransport;
+use Semitexa\Testing\Application\Service\Transport\HttpTransport;
+use Semitexa\Testing\Application\Service\Transport\InProcessTransport;
 
 /**
  * PHPUnit 10+ Extension (uses Event System, not deprecated Listeners).
@@ -19,7 +19,7 @@ use Semitexa\Testing\Transport\InProcessTransport;
  * Configuration via phpunit.xml:
  * ```xml
  * <extensions>
- *     <bootstrap class="Semitexa\Testing\PhpUnitExtension">
+ *     <bootstrap class="Semitexa\Testing\Application\Service\PhpUnitExtension">
  *         <parameter name="transport"   value="in-process"/>  <!-- or "http" -->
  *         <parameter name="base_url"    value="http://localhost:9501"/>
  *         <parameter name="fail_fast"   value="false"/>

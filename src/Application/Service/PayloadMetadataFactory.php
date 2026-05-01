@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Factory;
+namespace Semitexa\Testing\Application\Service;
 
 use ReflectionClass;
 use ReflectionNamedType;
 use Semitexa\Core\Attribute\AsPayload;
 use Semitexa\Testing\Attribute\TestablePayload;
 use Semitexa\Testing\Attribute\TestablePayloadPart;
-use Semitexa\Testing\Data\PayloadMetadata;
-use Semitexa\Testing\Data\PropertyMeta;
+use Semitexa\Testing\Domain\Model\PayloadMetadata;
+use Semitexa\Testing\Domain\Model\PropertyMeta;
 
 final class PayloadMetadataFactory
 {

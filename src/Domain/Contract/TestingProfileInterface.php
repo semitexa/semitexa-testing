@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Domain\Contract;
 
-use Semitexa\Testing\Data\PayloadMetadata;
+use Semitexa\Testing\Domain\Model\PayloadMetadata;
 
 /**
  * A profile is a named collection of strategies (a bundle / meta-strategy).

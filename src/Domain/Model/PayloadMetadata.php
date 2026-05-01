@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Data;
+namespace Semitexa\Testing\Domain\Model;
 
 /**
  * Pre-populated metadata for a PayloadDTO, built via Reflection by PayloadMetadataFactory.

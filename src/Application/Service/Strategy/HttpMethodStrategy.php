@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Strategy;
+namespace Semitexa\Testing\Application\Service\Strategy;
 
 use PHPUnit\Framework\Assert;
 use Semitexa\Testing\Domain\Contract\TestingStrategyInterface;
-use Semitexa\Testing\Data\PayloadMetadata;
-use Semitexa\Testing\Data\ResponseResult;
-use Semitexa\Testing\Data\TestCaseDescriptor;
+use Semitexa\Testing\Domain\Model\PayloadMetadata;
+use Semitexa\Testing\Domain\Model\ResponseResult;
+use Semitexa\Testing\Domain\Model\TestCaseDescriptor;
 
 /**
  * Verifies that HTTP methods not listed in #[AsPayload(methods:...)] return 405.

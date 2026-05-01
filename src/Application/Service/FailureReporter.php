@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing;
+namespace Semitexa\Testing\Application\Service;
 
 use Semitexa\Testing\Domain\Contract\TestingStrategyInterface;
-use Semitexa\Testing\Data\PayloadMetadata;
-use Semitexa\Testing\Data\ResponseResult;
-use Semitexa\Testing\Data\TestCaseDescriptor;
+use Semitexa\Testing\Domain\Model\PayloadMetadata;
+use Semitexa\Testing\Domain\Model\ResponseResult;
+use Semitexa\Testing\Domain\Model\TestCaseDescriptor;
 
 /**
  * Writes structured JSON failure artifacts to var/test-reports/.

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing;
+namespace Semitexa\Testing\Application\Service;
 
 use Semitexa\Testing\Domain\Contract\TestingProfileInterface;
 use Semitexa\Testing\Domain\Contract\TestingStrategyInterface;
 use Semitexa\Testing\Domain\Contract\TransportInterface;
-use Semitexa\Testing\Data\ContractTestResult;
-use Semitexa\Testing\Data\PayloadMetadata;
-use Semitexa\Testing\Data\StrategyResult;
+use Semitexa\Testing\Domain\Model\ContractTestResult;
+use Semitexa\Testing\Domain\Model\PayloadMetadata;
+use Semitexa\Testing\Domain\Model\StrategyResult;
 
 /**
  * Orchestrates the execution of all declared strategies against a PayloadDTO.

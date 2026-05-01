@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Traits;
+namespace Semitexa\Testing\Application\Service;
 
-use Semitexa\Testing\Factory\PayloadMetadataFactory;
-use Semitexa\Testing\PayloadContractTester;
-use Semitexa\Testing\PhpUnitExtension;
+use Semitexa\Testing\Application\Service\PayloadMetadataFactory;
+use Semitexa\Testing\Application\Service\PayloadContractTester;
+use Semitexa\Testing\Application\Service\PhpUnitExtension;
 
 /**
  * PHPUnit trait for payload contract testing.

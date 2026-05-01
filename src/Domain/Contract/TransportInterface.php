@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Domain\Contract;
 
-use Semitexa\Testing\Data\ResponseResult;
-use Semitexa\Testing\Data\TestCaseDescriptor;
+use Semitexa\Testing\Domain\Model\ResponseResult;
+use Semitexa\Testing\Domain\Model\TestCaseDescriptor;
 
 /**
  * Abstraction over how test requests are dispatched.

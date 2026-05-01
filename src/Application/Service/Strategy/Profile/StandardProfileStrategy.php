@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Strategy\Profile;
+namespace Semitexa\Testing\Application\Service\Strategy\Profile;
 
 use Semitexa\Testing\Domain\Contract\TestingProfileInterface;
-use Semitexa\Testing\Data\PayloadMetadata;
-use Semitexa\Testing\Data\ResponseResult;
-use Semitexa\Testing\Data\TestCaseDescriptor;
-use Semitexa\Testing\Strategy\HttpMethodStrategy;
-use Semitexa\Testing\Strategy\SecurityStrategy;
-use Semitexa\Testing\Strategy\TypeEnforcementStrategy;
+use Semitexa\Testing\Domain\Model\PayloadMetadata;
+use Semitexa\Testing\Domain\Model\ResponseResult;
+use Semitexa\Testing\Domain\Model\TestCaseDescriptor;
+use Semitexa\Testing\Application\Service\Strategy\HttpMethodStrategy;
+use Semitexa\Testing\Application\Service\Strategy\SecurityStrategy;
+use Semitexa\Testing\Application\Service\Strategy\TypeEnforcementStrategy;
 
 /**
  * Standard profile: covers auth, HTTP methods, and required-field validation.

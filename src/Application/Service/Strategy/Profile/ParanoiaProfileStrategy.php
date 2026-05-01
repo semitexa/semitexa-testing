@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Strategy\Profile;
+namespace Semitexa\Testing\Application\Service\Strategy\Profile;
 
 use Semitexa\Testing\Domain\Contract\TestingProfileInterface;
-use Semitexa\Testing\Data\PayloadMetadata;
-use Semitexa\Testing\Data\ResponseResult;
-use Semitexa\Testing\Data\TestCaseDescriptor;
-use Semitexa\Testing\Strategy\CoroutineIsolationStrategy;
-use Semitexa\Testing\Strategy\MemoryLeakStrategy;
-use Semitexa\Testing\Strategy\MonkeyTestingStrategy;
+use Semitexa\Testing\Domain\Model\PayloadMetadata;
+use Semitexa\Testing\Domain\Model\ResponseResult;
+use Semitexa\Testing\Domain\Model\TestCaseDescriptor;
+use Semitexa\Testing\Application\Service\Strategy\CoroutineIsolationStrategy;
+use Semitexa\Testing\Application\Service\Strategy\MemoryLeakStrategy;
+use Semitexa\Testing\Application\Service\Strategy\MonkeyTestingStrategy;
 
 /**
  * Paranoia Profile: The ultimate testing confidence level for Semitexa modules.
