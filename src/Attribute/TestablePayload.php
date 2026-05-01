@@ -23,7 +23,7 @@ use Attribute;
  *         'token_provider' => TestTokenProvider::class,
  *     ]
  * )]
- * class PaymentPayload implements PayloadInterface, ValidatablePayload { }
+ * class PaymentPayload implements PayloadInterface { }
  * ```
  *
  * The `context` map is passed as-is to each strategy via PayloadMetadata::$context.
