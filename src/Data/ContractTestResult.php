@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Data;
 
+use Semitexa\Testing\Data\StrategyResultStatus;
+
 final class ContractTestResult
 {
     /** @param list<StrategyResult> $results */

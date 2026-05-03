@@ -7,8 +7,8 @@ namespace Semitexa\Testing\Factory;
 use ReflectionClass;
 use ReflectionNamedType;
 use Semitexa\Core\Attribute\AsPayload;
-use Semitexa\Testing\Attribute\TestablePayload;
-use Semitexa\Testing\Attribute\TestablePayloadPart;
+use Semitexa\Testing\Attributes\TestablePayload;
+use Semitexa\Testing\Attributes\TestablePayloadPart;
 use Semitexa\Testing\Data\PayloadMetadata;
 use Semitexa\Testing\Data\PropertyMeta;
 

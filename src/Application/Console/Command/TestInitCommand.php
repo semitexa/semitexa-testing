@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Console\Command;
+namespace Semitexa\Testing\Application\Console\Command;
 
 use Semitexa\Core\Attribute\AsCommand;
-use Semitexa\Core\Console\Command\BaseCommand;
+use Semitexa\Core\Console\BaseCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -64,7 +64,7 @@ namespace App\Tests\Payload;
 
 use PHPUnit\Framework\TestCase;
 use Semitexa\Core\Discovery\ClassDiscovery;
-use Semitexa\Testing\Attribute\TestablePayload;
+use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Traits\TestsPayloads;
 
 /**

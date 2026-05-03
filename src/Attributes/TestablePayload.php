@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Semitexa\Testing\Attribute;
+namespace Semitexa\Testing\Attributes;
 
 use Attribute;
 
@@ -23,7 +23,7 @@ use Attribute;
  *         'token_provider' => TestTokenProvider::class,
  *     ]
  * )]
- * class PaymentPayload implements PayloadInterface, ValidatablePayload { }
+ * class PaymentPayload implements PayloadInterface { }
  * ```
  *
  * The `context` map is passed as-is to each strategy via PayloadMetadata::$context.
