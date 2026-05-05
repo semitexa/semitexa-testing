@@ -13,11 +13,12 @@ use Semitexa\Core\Http\HttpStatus;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
 /**
- * Verifies that protected (non-public) payloads reject unauthenticated requests with 401.
+ * Verifies that non-public payloads reject unauthenticated requests with 401.
  *
- * A payload is protected when it does not carry #[PublicEndpoint].
- * Under the default-deny authorization model, the absence of #[PublicEndpoint]
- * means the endpoint requires authentication — no opt-in attribute needed.
+ * A payload is "public" only when it explicitly declares #[AsPublicPayload].
+ * #[AsProtectedPayload] and #[AsServicePayload] both require authentication
+ * (user-session vs machine-credential, respectively), so SecurityStrategy
+ * runs against both.
  *
  * Required context keys:
  *   - auth_header:    e.g. 'Authorization'
@@ -46,7 +47,7 @@ final class SecurityStrategy implements TestingStrategyInterface
     public function skipReason(PayloadMetadata $metadata): string
     {
         if ($metadata->isPublic) {
-            return 'Payload has #[PublicEndpoint] — SecurityStrategy skipped (public endpoints allow anonymous access).';
+            return 'Payload declares #[AsPublicPayload] — SecurityStrategy skipped (public endpoints allow anonymous access).';
         }
         foreach (self::REQUIRED_CONTEXT as $key) {
             if (!isset($metadata->context[$key])) {
