@@ -31,13 +31,16 @@ final class PayloadMetadataFactory
         $ref = new ReflectionClass($payloadClass);
 
         // --- payload-route attribute (one of AsPublicPayload/AsProtectedPayload/AsServicePayload) ---
-        $routeAttrs = $ref->getAttributes(AbstractPayloadRoute::class, ReflectionAttribute::IS_INSTANCEOF);
+        $routeAttrs = class_exists(AbstractPayloadRoute::class)
+            ? $ref->getAttributes(AbstractPayloadRoute::class, ReflectionAttribute::IS_INSTANCEOF)
+            : [];
         $route = !empty($routeAttrs) ? $routeAttrs[0]->newInstance() : null;
         $path = $route?->path ?? '/';
         $methods = $route?->methods ?? ['GET'];
 
         // --- access classification — walk class hierarchy (PHP attributes are not inherited) ---
-        $isPublic = self::resolveAccessType($ref) === PayloadAccessType::Public;
+        $accessType = self::resolveAccessType($ref);
+        $isPublic = $accessType === 'public';
 
         // --- #[TestablePayload] ---
         $testableAttrs = $ref->getAttributes(TestablePayload::class);
@@ -78,17 +81,23 @@ final class PayloadMetadataFactory
      * that as a hard error elsewhere; this factory just refuses to claim the
      * payload is public without an explicit declaration.
      */
-    private static function resolveAccessType(ReflectionClass $ref): PayloadAccessType
+    /** @return 'public'|'protected'|'service' */
+    private static function resolveAccessType(ReflectionClass $ref): string
     {
+        if (!class_exists(AbstractPayloadRoute::class)) {
+            return 'protected';
+        }
+
         $current = $ref;
         while ($current !== false) {
             $attrs = $current->getAttributes(AbstractPayloadRoute::class, ReflectionAttribute::IS_INSTANCEOF);
             if ($attrs !== []) {
-                return $attrs[0]->newInstance()->getAccessType();
+                $type = $attrs[0]->newInstance()->getAccessType();
+                return is_object($type) && method_exists($type, 'value') ? (string) $type->value : (string) $type;
             }
             $current = $current->getParentClass();
         }
-        return PayloadAccessType::Protected;
+        return 'protected';
     }
 
     /**
