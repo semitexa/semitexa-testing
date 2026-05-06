@@ -11,7 +11,7 @@ use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Testing\Data\TestCaseDescriptor;
 
 /**
- * Verifies that HTTP methods not listed in #[AsPayload(methods:...)] return 405.
+ * Verifies that HTTP methods not listed in #[AsProtectedPayload(methods:...)] return 405.
  */
 final class HttpMethodStrategy implements TestingStrategyInterface
 {

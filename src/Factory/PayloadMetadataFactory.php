@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Factory;
 
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
-use Semitexa\Core\Attribute\AsPayload;
+use Semitexa\Core\Attribute\AbstractPayloadRoute;
+use Semitexa\Core\Auth\PayloadAccessType;
 use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Attributes\TestablePayloadPart;
 use Semitexa\Testing\Data\PayloadMetadata;
@@ -14,8 +16,6 @@ use Semitexa\Testing\Data\PropertyMeta;
 
 final class PayloadMetadataFactory
 {
-    private const PUBLIC_ENDPOINT_ATTRIBUTE = 'Semitexa\\Authorization\\Attributes\\PublicEndpoint';
-
     /** @var array<class-string, PayloadMetadata> */
     private static array $cache = [];
 
@@ -30,14 +30,17 @@ final class PayloadMetadataFactory
 
         $ref = new ReflectionClass($payloadClass);
 
-        // --- #[AsPayload] ---
-        $asPayloadAttrs = $ref->getAttributes(AsPayload::class);
-        $asPayload = !empty($asPayloadAttrs) ? $asPayloadAttrs[0]->newInstance() : null;
-        $path = $asPayload?->path ?? '/';
-        $methods = $asPayload?->methods ?? ['GET'];
+        // --- payload-route attribute (one of AsPublicPayload/AsProtectedPayload/AsServicePayload) ---
+        $routeAttrs = class_exists(AbstractPayloadRoute::class)
+            ? $ref->getAttributes(AbstractPayloadRoute::class, ReflectionAttribute::IS_INSTANCEOF)
+            : [];
+        $route = !empty($routeAttrs) ? $routeAttrs[0]->newInstance() : null;
+        $path = $route?->path ?? '/';
+        $methods = $route?->methods ?? ['GET'];
 
-        // --- #[PublicEndpoint] — walk class hierarchy (PHP attributes are not inherited) ---
-        $isPublic = self::hasPublicEndpoint($ref);
+        // --- access classification — walk class hierarchy (PHP attributes are not inherited) ---
+        $accessType = self::resolveAccessType($ref);
+        $isPublic = $accessType === 'public';
 
         // --- #[TestablePayload] ---
         $testableAttrs = $ref->getAttributes(TestablePayload::class);
@@ -71,23 +74,30 @@ final class PayloadMetadataFactory
     }
 
     /**
-     * Walk the class hierarchy to find #[PublicEndpoint].
-     * PHP attributes are not inherited, so parent classes must be checked explicitly.
+     * Walk the class hierarchy to find the AbstractPayloadRoute attribute and
+     * return its access classification. PHP attributes are not inherited, so
+     * parent classes must be checked explicitly. Defaults to Protected when no
+     * access attribute is found anywhere in the chain — the resolver treats
+     * that as a hard error elsewhere; this factory just refuses to claim the
+     * payload is public without an explicit declaration.
      */
-    private static function hasPublicEndpoint(ReflectionClass $ref): bool
+    /** @return 'public'|'protected'|'service' */
+    private static function resolveAccessType(ReflectionClass $ref): string
     {
-        if (!class_exists(self::PUBLIC_ENDPOINT_ATTRIBUTE)) {
-            return false;
+        if (!class_exists(AbstractPayloadRoute::class)) {
+            return 'protected';
         }
 
         $current = $ref;
         while ($current !== false) {
-            if ($current->getAttributes(self::PUBLIC_ENDPOINT_ATTRIBUTE) !== []) {
-                return true;
+            $attrs = $current->getAttributes(AbstractPayloadRoute::class, ReflectionAttribute::IS_INSTANCEOF);
+            if ($attrs !== []) {
+                $type = $attrs[0]->newInstance()->getAccessType();
+                return is_object($type) && method_exists($type, 'value') ? (string) $type->value : (string) $type;
             }
             $current = $current->getParentClass();
         }
-        return false;
+        return 'protected';
     }
 
     /**

@@ -14,7 +14,7 @@ use Attribute;
  *
  * Example:
  * ```php
- * #[AsPayload(path: '/api/payments', methods: ['POST'])]
+ * #[AsProtectedPayload(path: '/api/payments', methods: ['POST'])]
  * #[TestablePayload(
  *     strategies: [ParanoidProfileStrategy::class],
  *     context: [
