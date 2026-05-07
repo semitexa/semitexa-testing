@@ -21,6 +21,11 @@
       "Semitexa\\Testing\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Semitexa\\Testing\\Tests\\": "tests/"
+    }
+  },
   "keywords": [
     "semitexa",
     "testing",
