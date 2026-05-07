@@ -21,8 +21,15 @@ use Semitexa\Core\Support\ProjectRoot;
  */
 final class LocalModuleTestAutoloadRegistrar
 {
+    private static bool $registered = false;
+
     public static function register(?string $projectRoot = null): void
     {
+        if (self::$registered) {
+            return;
+        }
+        self::$registered = true;
+
         $root = $projectRoot ?? ProjectRoot::get();
         $modulesDir = $root . '/src/modules';
         if (!is_dir($modulesDir)) {

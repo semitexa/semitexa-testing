@@ -25,11 +25,11 @@ class ProjectPayloadsContractTest extends TestCase
         /** @var ClassDiscovery $classDiscovery */
         $classDiscovery = ContainerFactory::get()->get(ClassDiscovery::class);
         $payloads = $classDiscovery->findClassesWithAttribute(TestablePayload::class);
+        $this->assertIsArray($payloads);
+        $this->assertNotEmpty($payloads, 'No #[TestablePayload] classes discovered — check bootstrap or module registration.');
 
         foreach ($payloads as $class) {
             $this->assertPayloadContract($class);
         }
-
-        $this->assertIsArray($payloads);
     }
 }
