@@ -59,7 +59,11 @@ final class ProjectPayloadsContractTest extends TestCase
     public function every_opted_in_payload_satisfies_its_declared_strategies(): void
     {
         $classDiscovery = ContainerFactory::get()->get(ClassDiscovery::class);
-        \assert($classDiscovery instanceof ClassDiscovery);
+        self::assertInstanceOf(
+            ClassDiscovery::class,
+            $classDiscovery,
+            'ClassDiscovery must be resolvable when sweeping #[TestablePayload] adopters.',
+        );
         $payloads = $classDiscovery->findClassesWithAttribute(TestablePayload::class);
 
         if ($payloads === []) {
@@ -67,8 +71,7 @@ final class ProjectPayloadsContractTest extends TestCase
             // not a discovery defect (the previous test already proved the
             // discovery surface is healthy). Adding `#[TestablePayload(...)]`
             // to any payload in the codebase automatically enrols it here.
-            self::assertSame([], $payloads);
-            return;
+            self::markTestSkipped('No #[TestablePayload] adopters found in this project checkout.');
         }
 
         foreach ($payloads as $class) {
