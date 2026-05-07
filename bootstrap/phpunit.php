@@ -26,19 +26,32 @@ declare(strict_types=1);
  */
 
 (static function (): void {
-    $current = __DIR__;
     $autoload = null;
+    $candidates = [];
+
+    $cwd = getcwd();
+    if (is_string($cwd) && $cwd !== '') {
+        $candidates[] = $cwd . '/vendor/autoload.php';
+    }
+    if (isset($_SERVER['PWD']) && is_string($_SERVER['PWD']) && $_SERVER['PWD'] !== '') {
+        $candidates[] = $_SERVER['PWD'] . '/vendor/autoload.php';
+    }
+
+    $current = __DIR__;
     for ($i = 0; $i < 8; $i++) {
-        $candidate = $current . '/vendor/autoload.php';
-        if (is_file($candidate)) {
-            $autoload = $candidate;
-            break;
-        }
+        $candidates[] = $current . '/vendor/autoload.php';
         $parent = \dirname($current);
         if ($parent === $current) {
             break;
         }
         $current = $parent;
+    }
+
+    foreach (array_values(array_unique($candidates)) as $candidate) {
+        if (is_file($candidate)) {
+            $autoload = $candidate;
+            break;
+        }
     }
 
     if ($autoload === null) {
