@@ -13,13 +13,19 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Process;
 
-#[AsCommand(name: 'test:run', description: 'Run PHPUnit tests inside Docker (APP_ENV=dev only)')]
+#[AsCommand(
+    name: 'test:run',
+    description: 'PHPUnit-only fallback (Docker, APP_ENV=dev). Use bin/semitexa test:run for the full PHPUnit + E2E pipeline.',
+)]
 class TestRunCommand extends BaseCommand
 {
     protected function configure(): void
     {
         $this->setName('test:run')
-            ->setDescription('Run PHPUnit tests inside Docker (APP_ENV=dev only)')
+            ->setDescription(
+                'PHPUnit-only fallback (Docker, APP_ENV=dev). '
+                . 'Canonical entry point is bin/semitexa test:run, which adds the E2E (Playwright) phase.',
+            )
             ->addArgument(
                 'phpunit-args',
                 InputArgument::OPTIONAL | InputArgument::IS_ARRAY,
