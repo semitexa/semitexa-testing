@@ -11,6 +11,7 @@ return new LocalModuleStructureExtension(
     package: 'testing',
     topLevelDirectories: [
         'Attributes',
+        'Boot',
         'Contract',
         'Data',
         'Factory',
@@ -29,6 +30,12 @@ return new LocalModuleStructureExtension(
             allowedFilePatterns: [$pascalCasePhp],
             mode: ModuleStructureRule::MODE_LEAF_FILES_ONLY,
             rationale: 'semitexa-testing public PHP attributes consumed directly by application payloads.',
+        ),
+        'Boot' => new ModuleStructureRule(
+            path: 'Boot',
+            allowedFilePatterns: [$pascalCasePhp],
+            mode: ModuleStructureRule::MODE_LEAF_FILES_ONLY,
+            rationale: 'semitexa-testing bootstrap helpers that register local-module test autoloading.',
         ),
         'Contract' => new ModuleStructureRule(
             path: 'Contract',
