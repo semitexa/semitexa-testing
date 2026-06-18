@@ -93,7 +93,13 @@ final class PayloadMetadataFactory
             $attrs = $current->getAttributes(AbstractPayloadRoute::class, ReflectionAttribute::IS_INSTANCEOF);
             if ($attrs !== []) {
                 $type = $attrs[0]->newInstance()->getAccessType();
-                return is_object($type) && method_exists($type, 'value') ? (string) $type->value : (string) $type;
+                if ($type instanceof \BackedEnum) {
+                    return (string) $type->value;
+                }
+                if ($type instanceof \UnitEnum) {
+                    return strtolower($type->name);
+                }
+                return (string) $type;
             }
             $current = $current->getParentClass();
         }
