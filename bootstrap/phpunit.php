@@ -36,6 +36,15 @@ declare(strict_types=1);
     putenv('SEMITEXA_AI_TRACE_ID');
     unset($_ENV['SEMITEXA_AI_TRACE_ID'], $_SERVER['SEMITEXA_AI_TRACE_ID']);
 
+    // `bin/semitexa test:run` runs the whole repo (5000+ tests) in ONE phpunit
+    // process; PHPUnit retains per-test state, so the default 128M exhausts
+    // mid-run (a fatal that aborts before the summary, skipping the E2E phase).
+    // Raise the ceiling here so every run gets the headroom; never lower an
+    // explicit unlimited.
+    if (ini_get('memory_limit') !== '-1') {
+        ini_set('memory_limit', '2G');
+    }
+
     $autoload = null;
     $candidates = [];
 
