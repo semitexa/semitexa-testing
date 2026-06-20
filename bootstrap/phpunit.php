@@ -15,6 +15,12 @@ declare(strict_types=1);
  *      (src/modules/<Name>/src), so module classes load in tests.
  *   3. Register test PSR-4 mappings for local modules
  *      (src/modules/<Name>/tests).
+ *   4. Clear an inherited SEMITEXA_AI_TRACE_ID so the test process is
+ *      hermetic. AGENTS.md §4 tells agents to `export SEMITEXA_AI_TRACE_ID`
+ *      at task start; if that leaks into PHPUnit, command-under-test runs
+ *      append trace events into temp project roots and perturb asserted
+ *      output (flaky failures). No test depends on an *inherited* id — the
+ *      ones exercising the env fallback set and clear their own.
  *
  * Test namespace registration intentionally lives here — never in root
  * composer autoload.files — to keep production runtime free of test
@@ -26,6 +32,19 @@ declare(strict_types=1);
  */
 
 (static function (): void {
+    // Hermeticity: no test may inherit an ambient agent trace id (see responsibility 4).
+    putenv('SEMITEXA_AI_TRACE_ID');
+    unset($_ENV['SEMITEXA_AI_TRACE_ID'], $_SERVER['SEMITEXA_AI_TRACE_ID']);
+
+    // `bin/semitexa test:run` runs the whole repo (5000+ tests) in ONE phpunit
+    // process; PHPUnit retains per-test state, so the default 128M exhausts
+    // mid-run (a fatal that aborts before the summary, skipping the E2E phase).
+    // Raise the ceiling here so every run gets the headroom; never lower an
+    // explicit unlimited.
+    if (ini_get('memory_limit') !== '-1') {
+        ini_set('memory_limit', '2G');
+    }
+
     $autoload = null;
     $candidates = [];
 
