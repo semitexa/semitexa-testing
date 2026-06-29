@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Semitexa\Testing\Transport;
 
 use Semitexa\Core\Application;
-use Semitexa\Core\Http\PayloadHydrator;
 use Semitexa\Core\Request;
 use Semitexa\Testing\Contract\TransportInterface;
 use Semitexa\Testing\Data\ResponseResult;
@@ -15,11 +14,9 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  * Dispatches test requests directly through Application::handleRequest().
  *
  * No network, no Swoole coroutine conflicts.
- * Enables strict hydration mode for the duration of each request.
- *
- * WARNING: PayloadHydrator::$strictTypes is a worker-global static flag.
- * This transport is only safe in single-process PHPUnit CLI.
- * Never use InProcessTransport inside a Swoole worker with concurrent coroutines.
+ * Requests it builds carry Request::$strictHydration = true, so PayloadHydrator
+ * runs in strict mode for these requests only. The flag is per-request (no
+ * process-global state), so this is safe even if dispatched concurrently.
  *
  * Use this transport for: SecurityStrategy, HttpMethodStrategy,
  * TypeEnforcementStrategy, MonkeyTestingStrategy.
@@ -37,32 +34,27 @@ final class InProcessTransport implements TransportInterface
             $warmup = $this->intContext($case, 'warmup', 5);
             $iterations = $this->intContext($case, 'iterations', 20);
 
-            PayloadHydrator::enableStrictMode(true);
-            try {
-                // 1. Warm up
-                for ($i = 0; $i < $warmup; $i++) {
-                    $this->application->handleRequest($this->buildRequest($case));
-                    $this->application->requestScopedContainer->reset();
-                }
-
-                gc_collect_cycles();
-                $baseline = memory_get_usage();
-
-                // 2. Iterations
-                for ($i = 0; $i < $iterations; $i++) {
-                    $this->application->handleRequest($this->buildRequest($case));
-                    $this->application->requestScopedContainer->reset();
-                }
-
-                gc_collect_cycles();
-                $final = memory_get_usage();
-
-                // Final check response (the last one)
-                $response = $this->application->handleRequest($request);
+            // 1. Warm up
+            for ($i = 0; $i < $warmup; $i++) {
+                $this->application->handleRequest($this->buildRequest($case));
                 $this->application->requestScopedContainer->reset();
-            } finally {
-                PayloadHydrator::enableStrictMode(false);
             }
+
+            gc_collect_cycles();
+            $baseline = memory_get_usage();
+
+            // 2. Iterations
+            for ($i = 0; $i < $iterations; $i++) {
+                $this->application->handleRequest($this->buildRequest($case));
+                $this->application->requestScopedContainer->reset();
+            }
+
+            gc_collect_cycles();
+            $final = memory_get_usage();
+
+            // Final check response (the last one)
+            $response = $this->application->handleRequest($request);
+            $this->application->requestScopedContainer->reset();
 
             return new ResponseResult(
                 statusCode: $response->statusCode,
@@ -79,12 +71,10 @@ final class InProcessTransport implements TransportInterface
             );
         }
 
-        PayloadHydrator::enableStrictMode(true);
         $start = microtime(true);
         try {
             $response = $this->application->handleRequest($request);
         } finally {
-            PayloadHydrator::enableStrictMode(false);
             $this->application->requestScopedContainer->reset();
         }
         $durationMs = (microtime(true) - $start) * 1000;
@@ -164,6 +154,7 @@ final class InProcessTransport implements TransportInterface
             server: [],
             cookies: $this->parseCookieHeader(isset($headers['Cookie']) ? (string) $headers['Cookie'] : ''),
             content: $content,
+            strictHydration: true,
         );
     }
 
