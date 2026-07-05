@@ -32,6 +32,13 @@ declare(strict_types=1);
  */
 
 (static function (): void {
+    // Enforce the codebase-wide UTC assumption in the test process too — the
+    // runtime sets it in ContainerFactory::create(), but many unit tests
+    // construct DateTimeImmutable without building a container, so a CI/dev
+    // box on a non-UTC php.ini would otherwise make date-sensitive assertions
+    // pass or fail by the machine's offset.
+    date_default_timezone_set('UTC');
+
     // Hermeticity: no test may inherit an ambient agent trace id (see responsibility 4).
     putenv('SEMITEXA_AI_TRACE_ID');
     unset($_ENV['SEMITEXA_AI_TRACE_ID'], $_SERVER['SEMITEXA_AI_TRACE_ID']);
