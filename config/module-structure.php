@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Semitexa\Dev\Application\Service\Ai\Verify\Structure\LocalModuleStructureExtension;
 use Semitexa\Dev\Application\Service\Ai\Verify\Structure\ModuleStructureRule;
 
-$pascalCasePhp = '/^[A-Z][A-Za-z0-9]*\.php$/';
+$pascalCasePhp = '/^[A-Z][A-Za-z0-9_]*\.php$/';
 
 return new LocalModuleStructureExtension(
     package: 'testing',
@@ -39,7 +39,7 @@ return new LocalModuleStructureExtension(
         ),
         'Contract' => new ModuleStructureRule(
             path: 'Contract',
-            allowedFilePatterns: ['/^[A-Z][A-Za-z0-9]*Interface\.php$/'],
+            allowedFilePatterns: ['/^[A-Z][A-Za-z0-9_]*Interface\.php$/'],
             mode: ModuleStructureRule::MODE_LEAF_FILES_ONLY,
             rationale: 'semitexa-testing public strategy and transport contracts.',
         ),
@@ -51,7 +51,7 @@ return new LocalModuleStructureExtension(
         ),
         'Factory' => new ModuleStructureRule(
             path: 'Factory',
-            allowedFilePatterns: ['/^[A-Z][A-Za-z0-9]*Factory\.php$/'],
+            allowedFilePatterns: ['/^[A-Z][A-Za-z0-9_]*Factory\.php$/'],
             mode: ModuleStructureRule::MODE_LEAF_FILES_ONLY,
             rationale: 'semitexa-testing public metadata factory API.',
         ),
@@ -75,7 +75,7 @@ return new LocalModuleStructureExtension(
         ),
         'Transport' => new ModuleStructureRule(
             path: 'Transport',
-            allowedFilePatterns: ['/^[A-Z][A-Za-z0-9]*Transport\.php$/'],
+            allowedFilePatterns: ['/^[A-Z][A-Za-z0-9_]*Transport\.php$/'],
             mode: ModuleStructureRule::MODE_LEAF_FILES_ONLY,
             rationale: 'semitexa-testing public transport implementations.',
         ),
