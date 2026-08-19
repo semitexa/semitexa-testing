@@ -70,9 +70,15 @@ abstract class TestCase extends PhpUnitTestCase
         if (!mkdir($root . '/src/modules', 0755, true)) {
             self::fail("Could not create fixture project root at {$root}.");
         }
-        file_put_contents($root . '/composer.json', '{"name":"fixture/project"}');
+        // Track the root as soon as it exists, so tearDown deletes it even
+        // when one of the steps below fails the test.
         $this->fixtureRoots[] = $root;
-        chdir($root);
+        if (file_put_contents($root . '/composer.json', '{"name":"fixture/project"}') === false) {
+            self::fail("Could not write composer.json into the fixture root {$root}.");
+        }
+        if (!chdir($root)) {
+            self::fail("Could not chdir into the fixture root {$root}.");
+        }
         ProjectRoot::reset();
 
         return $root;
