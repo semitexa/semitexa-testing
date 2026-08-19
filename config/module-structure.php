@@ -23,6 +23,7 @@ return new LocalModuleStructureExtension(
         'FailureReporter.php',
         'PayloadContractTester.php',
         'PhpUnitExtension.php',
+        'TestCase.php',
     ],
     pathRules: [
         'Attributes' => new ModuleStructureRule(
