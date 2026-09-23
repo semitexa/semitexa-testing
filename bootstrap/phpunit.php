@@ -43,6 +43,17 @@ declare(strict_types=1);
     putenv('SEMITEXA_AI_TRACE_ID');
     unset($_ENV['SEMITEXA_AI_TRACE_ID'], $_SERVER['SEMITEXA_AI_TRACE_ID']);
 
+    // Hermeticity of the log: tests write their own file, never the application's.
+    // MEASURED 2026-09-17: all 400 ERROR lines in var/log/app.log came from test runs
+    // (fail-closed guards exercised on purpose), so `ai:ask logs --level=ERROR` could
+    // not show a real failure. Unconditional on purpose: an operator's LOG_FILE names
+    // the application log, which is exactly where test output must not land.
+    // SEMITEXA_TEST_LOG_FILE moves it; the path is project-relative, like LOG_FILE.
+    $testLogFile = getenv('SEMITEXA_TEST_LOG_FILE');
+    $testLogFile = is_string($testLogFile) && $testLogFile !== '' ? $testLogFile : 'var/log/test.log';
+    putenv('LOG_FILE=' . $testLogFile);
+    $_ENV['LOG_FILE'] = $_SERVER['LOG_FILE'] = $testLogFile;
+
     // `bin/semitexa test:run` runs the whole repo (5000+ tests) in ONE phpunit
     // process; PHPUnit retains per-test state, so the default 128M exhausts
     // mid-run (a fatal that aborts before the summary, skipping the E2E phase).

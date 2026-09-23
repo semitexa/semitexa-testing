@@ -8,7 +8,6 @@ use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
 use Semitexa\Core\Attribute\AbstractPayloadRoute;
-use Semitexa\Core\Auth\PayloadAccessType;
 use Semitexa\Testing\Attributes\TestablePayload;
 use Semitexa\Testing\Attributes\TestablePayloadPart;
 use Semitexa\Testing\Data\PayloadMetadata;
