@@ -2,6 +2,10 @@
 
 Automated payload contract testing with strategy-based validation and multiple test profiles.
 
+## Install
+
+Included as a dev dependency in every project created by the installer (https://semitexa.com/install.sh).
+
 ## Purpose
 
 Validates payload contracts by executing configurable test strategies against each payload marked with `#[TestablePayload]`. Supports security, HTTP method, type enforcement, and monkey testing strategies at multiple strictness levels.
@@ -23,3 +27,7 @@ Depends on Core. Used by application test suites to verify that payload contract
 ## Notes
 
 The InProcessTransport calls `Application::handleRequest()` directly, bypassing HTTP overhead. Use HttpTransport for end-to-end testing against a running Swoole server.
+
+## Docs
+
+https://semitexa.com/docs/testing/payload-contracts
