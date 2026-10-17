@@ -43,6 +43,14 @@ declare(strict_types=1);
     putenv('SEMITEXA_AI_TRACE_ID');
     unset($_ENV['SEMITEXA_AI_TRACE_ID'], $_SERVER['SEMITEXA_AI_TRACE_ID']);
 
+    // Nor the machine-wide agent presence store the app container mounts: a test
+    // that chdirs into a fixture root and joins would list a fake agent, holding
+    // a fake task, to every agent on the machine for 15 minutes.
+    foreach (['SEMITEXA_AGENTS_DIR', 'SEMITEXA_HOST_PROJECT_ROOT'] as $presenceVar) {
+        putenv($presenceVar);
+        unset($_ENV[$presenceVar], $_SERVER[$presenceVar]);
+    }
+
     // Hermeticity of the log: tests write their own file, never the application's.
     // MEASURED 2026-09-17: all 400 ERROR lines in var/log/app.log came from test runs
     // (fail-closed guards exercised on purpose), so `ai:ask logs --level=ERROR` could
