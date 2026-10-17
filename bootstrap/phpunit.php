@@ -45,8 +45,11 @@ declare(strict_types=1);
 
     // Nor the machine-wide agent presence store the app container mounts: a test
     // that chdirs into a fixture root and joins would list a fake agent, holding
-    // a fake task, to every agent on the machine for 15 minutes.
-    foreach (['SEMITEXA_AGENTS_DIR', 'SEMITEXA_HOST_PROJECT_ROOT'] as $presenceVar) {
+    // a fake task, to every agent on the machine for 15 minutes. Nor the session
+    // bin/semitexa now derives for every agent (ai:verify runs PHPUnit under it):
+    // a fixture registry would adopt the real session's id, or refuse claims
+    // because that session is missing from the fixture store.
+    foreach (['SEMITEXA_AGENTS_DIR', 'SEMITEXA_HOST_PROJECT_ROOT', 'SEMITEXA_AGENT_SESSION', 'SEMITEXA_AGENT_IMPLICIT'] as $presenceVar) {
         putenv($presenceVar);
         unset($_ENV[$presenceVar], $_SERVER[$presenceVar]);
     }
