@@ -70,6 +70,11 @@ trait TestsPayloads
             $this->addToAssertionCount($passed);
         } elseif (!$result->hasFailures() && count($result->getSkipped()) > 0) {
             $this->markTestSkipped("All strategies were skipped for {$payloadClass}.");
+        } elseif (!$result->hasFailures()) {
+            // Nothing declared, nothing run. Said as a skip, which is what the
+            // generated contract test promises, rather than left for PHPUnit to
+            // flag as risky in a project's first ever test run.
+            $this->markTestSkipped("No contract strategies declared for {$payloadClass}: add #[TestablePayload(strategies: [...])] to the payload to check it.");
         }
     }
 
