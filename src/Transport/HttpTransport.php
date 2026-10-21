@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Transport;
 
+use Semitexa\Core\Http\Client\CurlHttpClient;
+use Semitexa\Core\Http\Client\HttpCallOptions;
+use Semitexa\Core\Http\Client\HttpClientInterface;
+use Semitexa\Core\Http\Client\HttpRequest;
+use Semitexa\Core\Http\Client\RetryPolicy;
+use Semitexa\Core\Http\Exception\HttpTransportException;
 use Semitexa\Testing\Contract\TransportInterface;
 use Semitexa\Testing\Data\ResponseResult;
 use Semitexa\Testing\Data\TestCaseDescriptor;
@@ -18,70 +24,64 @@ use Semitexa\Testing\Data\TestCaseDescriptor;
  */
 final class HttpTransport implements TransportInterface
 {
-    public function __construct(private readonly string $baseUrl) {}
+    private readonly HttpClientInterface $http;
+
+    public function __construct(private readonly string $baseUrl, ?HttpClientInterface $http = null)
+    {
+        $this->http = $http ?? new CurlHttpClient();
+    }
 
     public function send(TestCaseDescriptor $case): ResponseResult
     {
         $url = rtrim($this->baseUrl, '/') . $case->path;
         $method = strtoupper($case->method);
 
-        $opts = [
-            CURLOPT_URL            => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HEADER         => true,
-            CURLOPT_CUSTOMREQUEST  => $method,
-            CURLOPT_TIMEOUT        => 10,
-        ];
-
-        $curlHeaders = [];
+        $headers = [];
         foreach ($case->headers as $name => $value) {
-            $curlHeaders[] = "{$name}: {$value}";
+            $headers[$name] = [(string) $value];
         }
 
+        $body = '';
         if ($case->body !== null && in_array($method, ['POST', 'PUT', 'PATCH'], true)) {
             $body = is_array($case->body)
-                ? json_encode($case->body, JSON_THROW_ON_ERROR)
+                // Substitute, as InProcessTransport does: a case built to send
+                // broken Unicode (the monkey strategy) is a request, not a crash.
+                ? json_encode($case->body, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE)
                 : (string) $case->body;
-            $opts[CURLOPT_POSTFIELDS] = $body;
             $hasContentType = array_filter(
                 array_keys($case->headers),
                 static fn(string $k): bool => strcasecmp($k, 'Content-Type') === 0,
             );
             if (empty($hasContentType)) {
-                $curlHeaders[] = 'Content-Type: application/json';
+                $headers['Content-Type'] = ['application/json'];
             }
         }
-
-        if ($curlHeaders) {
-            $opts[CURLOPT_HTTPHEADER] = $curlHeaders;
-        }
-
-        $ch = curl_init();
-        curl_setopt_array($ch, $opts);
 
         $start = microtime(true);
-        $raw = curl_exec($ch);
+        try {
+            // The server under test answers as it answers: no retry, and a
+            // large page is still a page.
+            $response = $this->http->send(new HttpRequest($method, $url, $headers, $body), new HttpCallOptions(
+                timeout: 10.0,
+                maxResponseBytes: 64 * 1024 * 1024,
+                retry: RetryPolicy::none(),
+            ));
+        } catch (HttpTransportException) {
+            // No answer at all: status 0 and an empty body (the curl version
+            // threw a TypeError here, reading false as the response).
+            return new ResponseResult(statusCode: 0, headers: [], body: '', durationMs: round((microtime(true) - $start) * 1000, 2));
+        }
         $durationMs = (microtime(true) - $start) * 1000;
 
-        $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        curl_close($ch);
-
-        $rawHeaders = substr($raw, 0, $headerSize);
-        $body = substr($raw, $headerSize);
-
-        $headers = [];
-        foreach (explode("\r\n", $rawHeaders) as $line) {
-            if (str_contains($line, ':')) {
-                [$name, $value] = explode(':', $line, 2);
-                $headers[trim($name)] = trim($value);
-            }
+        $flat = [];
+        foreach ($response->headers as $name => $values) {
+            $flat[$name] = (string) end($values);
         }
 
         return new ResponseResult(
-            statusCode: $statusCode,
-            headers: $headers,
-            body: $body,
+            statusCode: $response->status,
+            headers: $flat,
+            body: $response->body,
             durationMs: round($durationMs, 2),
         );
     }
