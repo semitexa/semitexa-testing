@@ -41,8 +41,8 @@ use Semitexa\Orm\Application\Service\Transaction\SharedTestTransaction;
  *
  * The transaction opens before setUp() and is rolled back after tearDown(), so
  * the rows setUp() writes are rolled back too. Tests that cannot run inside a
- * transaction — the code under test spawns coroutines, or enables Swoole hooks —
- * use RefreshesTables instead.
+ * transaction — the code under test runs database work in coroutines — use
+ * RefreshesTables instead.
  */
 trait RollsBackDatabase
 {

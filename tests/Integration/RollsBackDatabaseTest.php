@@ -8,6 +8,7 @@ use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Semitexa\Core\Support\CoroutineLocal;
+use Semitexa\Orm\Adapter\ConnectionPool;
 use Semitexa\Orm\Application\Service\Connection\ConnectionRegistry;
 use Semitexa\Orm\Application\Service\Transaction\SharedTestTransaction;
 use Semitexa\Orm\Domain\Model\ConnectionConfig;
@@ -106,6 +107,47 @@ final class RollsBackDatabaseTest extends TestCase
             0,
             (int) (new OrmManager())->getAdapter()->execute('SELECT COUNT(*) AS c FROM ' . self::TABLE)->rows[0]['c'],
         );
+    }
+
+    /**
+     * Every Co\run() leaves the hooks on behind it, and OrmManager reads them as
+     * "under a server": a manager that chose its pool after any coroutine test —
+     * the container's, built once per process — holds a coroutine
+     * ConnectionPool, which handed out connections of its own and committed.
+     */
+    #[Test]
+    public function a_coroutine_pool_chosen_before_the_test_joins_it(): void
+    {
+        $flags = \Swoole\Runtime::getHookFlags();
+        \Swoole\Coroutine::set(['hook_flags' => SWOOLE_HOOK_ALL]);
+        try {
+            $container = new OrmManager();
+            $container->getAdapter()->execute('SELECT 1');
+            self::assertInstanceOf(ConnectionPool::class, $container->getPool(), 'the precondition: a coroutine pool');
+
+            $test = self::harness();
+            $test->begin();
+            $container->getAdapter()->execute('INSERT INTO ' . self::TABLE . " (v) VALUES ('pooled')");
+            $inside = (int) $container->getAdapter()->execute('SELECT COUNT(*) AS c FROM ' . self::TABLE)->rows[0]['c'];
+            self::assertSame(0, self::committedRows(), 'nothing is committed while the test runs');
+            $refusal = null;
+            \Co\run(static function () use ($container, &$refusal): void {
+                try {
+                    $container->getAdapter()->execute('SELECT 1');
+                } catch (\LogicException $e) {
+                    $refusal = $e->getMessage();
+                }
+            });
+            self::assertStringContainsString('while a test transaction is open', (string) $refusal, 'a coroutine is refused, not given a connection that commits');
+            $test->end();
+
+            self::assertSame(1, $inside, 'the pool reads the test\'s own rows');
+            self::assertSame(0, self::committedRows(), 'and nothing is left after it');
+            $container->shutdown();
+        } finally {
+            // Never an explicit 0: every later Co\run() would run unhooked.
+            \Swoole\Coroutine::set(['hook_flags' => $flags === 0 ? SWOOLE_HOOK_ALL : $flags]);
+        }
     }
 
     #[Test]
