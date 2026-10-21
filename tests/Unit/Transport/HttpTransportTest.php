@@ -29,6 +29,7 @@ final class HttpTransportTest extends TestCase
         self::assertSame(201, $result->statusCode);
         self::assertSame('{"id":7}', $result->body);
         self::assertSame('b', $result->headers['x-trace'], 'a repeated header keeps its last value');
+        self::assertSame('application/json', $result->header('Content-Type'), 'read in any spelling');
         self::assertFalse($http->recordedOptions()[0]->retry->appliesTo('GET'), 'the server under test answers once');
     }
 
