@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Semitexa\Testing\Tests\Integration;
 
+use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Semitexa\Orm\Domain\Model\ConnectionConfig;
@@ -56,7 +57,9 @@ final class RollsBackDatabaseLifecycleTest extends TestCase
         self::assertSame(2, self::rows(new OrmManager()));
     }
 
+    /** Run alone, there would be nothing to find: it needs the writes first. */
     #[Test]
+    #[Depends('a_test_writes_rows')]
     public function the_next_test_finds_none_of_them(): void
     {
         // setUp() has written its own row again, inside this test's transaction.

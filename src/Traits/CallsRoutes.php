@@ -54,7 +54,12 @@ trait CallsRoutes
      */
     protected function post(string $uri, array $fields = [], array $headers = []): TestResponse
     {
-        return $this->call('POST', $uri, post: $fields, content: http_build_query($fields), headers: self::headersOver(['Content-Type' => 'application/x-www-form-urlencoded'], $headers));
+        // The fields as the server parses the body: strings. An int handed on
+        // as it is read as absent through Request::getPost().
+        $body = http_build_query($fields);
+        parse_str($body, $post);
+
+        return $this->call('POST', $uri, post: $post, content: $body, headers: self::headersOver(['Content-Type' => 'application/x-www-form-urlencoded'], $headers));
     }
 
     /**
@@ -99,7 +104,8 @@ trait CallsRoutes
         return $this->call(
             $method,
             $uri,
-            content: $data === [] ? null : (string) json_encode($data, JSON_THROW_ON_ERROR),
+            // An empty payload is still a payload on a write; GET, HEAD and DELETE go without a body.
+            content: $data === [] && in_array(strtoupper($method), ['GET', 'HEAD', 'DELETE'], true) ? null : (string) json_encode($data, JSON_THROW_ON_ERROR),
             headers: self::headersOver(['Accept' => 'application/json', 'Content-Type' => 'application/json'], $headers),
         );
     }

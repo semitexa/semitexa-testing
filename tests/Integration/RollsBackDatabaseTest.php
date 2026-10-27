@@ -46,7 +46,12 @@ final class RollsBackDatabaseTest extends TestCase
         // A failed assertion before end() must not leave the transaction open.
         try {
             SharedTestTransaction::for('default', 'mysql')?->rollBack();
-        } catch (\LogicException) {
+        } catch (\LogicException $e) {
+            // Dropped: only "committed before the test ended", the DDL and
+            // TRUNCATE cases these tests provoke and assert themselves.
+            if (!str_contains($e->getMessage(), 'was committed before the test ended')) {
+                throw $e;
+            }
         }
     }
 

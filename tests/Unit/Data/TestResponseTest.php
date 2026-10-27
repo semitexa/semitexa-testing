@@ -41,4 +41,24 @@ final class TestResponseTest extends TestCase
         $this->expectException(AssertionFailedError::class);
         $response->assertJsonPath('data.id', 1);
     }
+
+    #[Test]
+    public function a_header_sent_with_no_value_is_absent(): void
+    {
+        $response = new TestResponse(new HttpResponse('ok', 200, ['X-Trace' => [], 'X-Both' => ['a', 'b']]));
+
+        self::assertNull($response->header('x-trace'));
+        self::assertSame('a, b', $response->header('x-both'));
+        $this->expectException(AssertionFailedError::class);
+        $this->expectExceptionMessage('No X-Trace header in the response.');
+        $response->assertHeader('X-Trace');
+    }
+
+    #[Test]
+    public function not_seeing_a_text_in_an_empty_body_fails(): void
+    {
+        $this->expectException(AssertionFailedError::class);
+        $this->expectExceptionMessage("The body is empty, so not seeing 'secret' in it says nothing.");
+        (new TestResponse(new HttpResponse('', 200)))->assertDontSee('secret');
+    }
 }

@@ -68,7 +68,12 @@ trait RollsBackDatabase
                 $this->databaseTransactionsToRollBack[] = SharedTestTransaction::begin($connectionName);
             } catch (\Throwable $e) {
                 // Those already opened must not stay open into the next test.
-                $this->rollBackDatabaseTransaction();
+                // A failure of that cleanup is dropped: the begin failure is
+                // the cause, and the one the test report must show.
+                try {
+                    $this->rollBackDatabaseTransaction();
+                } catch (\Throwable) {
+                }
 
                 throw $e;
             }

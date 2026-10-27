@@ -22,11 +22,15 @@ final class TestResponse
         return $this->response->getContent();
     }
 
-    /** A header's value, case-insensitive; null when it was not sent. */
+    /** A header's value, case-insensitive; null when it was not sent, or sent with no value. */
     public function header(string $name): ?string
     {
         foreach ($this->response->getHeaders() as $key => $value) {
             if (strcasecmp((string) $key, $name) === 0) {
+                if ($value === []) {
+                    return null;
+                }
+
                 return is_array($value) ? implode(', ', array_map('strval', $value)) : (string) $value;
             }
         }
@@ -89,8 +93,10 @@ final class TestResponse
         return $this;
     }
 
+    /** The text is absent from a body that has something in it: an empty body proves nothing. */
     public function assertDontSee(string $text): self
     {
+        Assert::assertNotSame('', $this->body(), "The body is empty, so not seeing '{$text}' in it says nothing.");
         Assert::assertStringNotContainsString($text, $this->body());
 
         return $this;
