@@ -39,6 +39,22 @@ final class CallsRoutesBodyTest extends TestCase
         self::assertSame('id=7&tags%5B0%5D=a&tags%5B1%5D=b', $this->calls[0]['content']);
     }
 
+    /** The separator came from arg_separator.output: set to &amp;, the second field arrived as amp;b. */
+    #[Test]
+    public function form_fields_are_joined_by_an_ampersand_whatever_the_ini_says(): void
+    {
+        $previous = (string) ini_get('arg_separator.output');
+        ini_set('arg_separator.output', '&amp;');
+        try {
+            $this->post('/items', ['a' => '1', 'b' => '2']);
+        } finally {
+            ini_set('arg_separator.output', $previous);
+        }
+
+        self::assertSame('a=1&b=2', $this->calls[0]['content']);
+        self::assertSame(['a' => '1', 'b' => '2'], $this->calls[0]['post']);
+    }
+
     #[Test]
     public function an_empty_json_write_still_sends_a_payload_and_a_delete_sends_none(): void
     {

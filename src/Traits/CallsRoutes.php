@@ -56,7 +56,7 @@ trait CallsRoutes
     {
         // The fields as the server parses the body: strings. An int handed on
         // as it is read as absent through Request::getPost().
-        $body = http_build_query($fields);
+        $body = http_build_query($fields, '', '&');
         parse_str($body, $post);
 
         return $this->call('POST', $uri, post: $post, content: $body, headers: self::headersOver(['Content-Type' => 'application/x-www-form-urlencoded'], $headers));

@@ -141,7 +141,7 @@ final class InProcessTransport implements TransportInterface
                 $headers['Content-Type'] ??= 'application/json';
             } elseif ($method === 'GET' && is_array($case->body)) {
                 $query = $case->body;
-                $uri .= '?' . http_build_query($query);
+                $uri .= '?' . http_build_query($query, '', '&');
             }
         }
 
