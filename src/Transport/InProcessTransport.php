@@ -140,10 +140,12 @@ final class InProcessTransport implements TransportInterface
                 }
                 $headers['Content-Type'] ??= 'application/json';
             } elseif ($method === 'GET' && is_array($case->body)) {
-                $query = $case->body;
-                $uri .= '?' . http_build_query($query, '', '&');
+                $uri .= (str_contains($uri, '?') ? '&' : '?') . http_build_query($case->body, '', '&');
             }
         }
+        // Parsed from the whole URI, as the server does: the path's own query
+        // was dropped, and a body's ints stayed ints, which getQuery() ignores.
+        parse_str((string) parse_url($uri, PHP_URL_QUERY), $query);
 
         return new Request(
             method: $method,
@@ -152,10 +154,27 @@ final class InProcessTransport implements TransportInterface
             query: $query,
             post: $post,
             server: [],
-            cookies: $this->parseCookieHeader(isset($headers['Cookie']) ? (string) $headers['Cookie'] : ''),
+            cookies: $this->parseCookieHeader($this->headerValue($headers, 'Cookie')),
             content: $content,
             strictHydration: true,
         );
+    }
+
+    /**
+     * A header looked up as HTTP does, whatever the case of its name: an exact
+     * 'Cookie' lookup missed 'cookie', and the request ran with no session.
+     *
+     * @param array<mixed> $headers
+     */
+    private function headerValue(array $headers, string $name): string
+    {
+        foreach ($headers as $key => $value) {
+            if (is_string($key) && strcasecmp($key, $name) === 0) {
+                return is_array($value) ? implode('; ', array_filter($value, 'is_string')) : (is_string($value) ? $value : '');
+            }
+        }
+
+        return '';
     }
 
     private function intContext(TestCaseDescriptor $case, string $key, int $default): int
