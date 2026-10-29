@@ -70,7 +70,7 @@ return new LocalModuleStructureExtension(
         ),
         'Traits' => new ModuleStructureRule(
             path: 'Traits',
-            allowedFiles: ['TestsPayloads.php', 'BuildsContainerManagedObjects.php'],
+            allowedFiles: ['TestsPayloads.php', 'BuildsContainerManagedObjects.php', 'CallsRoutes.php', 'RollsBackDatabase.php', 'RefreshesTables.php'],
             mode: ModuleStructureRule::MODE_LEAF_FILES_ONLY,
             rationale: 'semitexa-testing public PHPUnit integration traits.',
         ),

@@ -11,7 +11,8 @@
     ],
     "require": {
         "php": "^8.4",
-        "semitexa/core": "*"
+        "semitexa/core": "*",
+        "semitexa/orm": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.0"
@@ -19,6 +20,14 @@
     "autoload": {
         "psr-4": {
             "Semitexa\\Testing\\": "src/"
+        }
+    },
+    "extra": {
+        "semitexa": {
+            "floors": {
+                "semitexa/core": "next",
+                "semitexa/orm": "next"
+            }
         }
     },
     "autoload-dev": {
