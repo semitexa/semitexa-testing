@@ -63,6 +63,16 @@ final class TestResponseTest extends TestCase
         self::assertSame(['Accept, Cookie, Origin', null], [$response->header('VARY'), $response->header('X-None')]);
     }
 
+    /** Joined with ', ' two Set-Cookie lines read as one, and an Expires date already holds a comma. */
+    #[Test]
+    public function each_set_cookie_line_is_read_on_its_own(): void
+    {
+        $response = new TestResponse(new HttpResponse('ok', 200, ['Set-Cookie' => ['a=1; Expires=Thu, 29 Oct 2026 08:00:00 GMT', 'b=2'], 'set-cookie' => 'c=3']));
+
+        self::assertSame(['a=1; Expires=Thu, 29 Oct 2026 08:00:00 GMT', 'b=2', 'c=3'], $response->headerValues('Set-Cookie'));
+        self::assertSame([], $response->headerValues('X-Missing'));
+    }
+
     #[Test]
     public function not_seeing_a_text_in_an_empty_body_fails(): void
     {

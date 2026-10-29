@@ -29,6 +29,20 @@ final class TestResponse
      */
     public function header(string $name): ?string
     {
+        $values = $this->headerValues($name);
+
+        return $values === [] ? null : implode(', ', $values);
+    }
+
+    /**
+     * Every value of a header, one per line it was sent on, for the headers
+     * that cannot be joined: two Set-Cookie lines joined with ', ' read as one,
+     * and an Expires date already holds a comma.
+     *
+     * @return list<string>
+     */
+    public function headerValues(string $name): array
+    {
         $values = [];
         foreach ($this->response->getHeaders() as $key => $value) {
             if (strcasecmp((string) $key, $name) === 0) {
@@ -36,7 +50,7 @@ final class TestResponse
             }
         }
 
-        return $values === [] ? null : implode(', ', $values);
+        return $values;
     }
 
     /** The decoded JSON body, or the value at a dot path (`data.items.0.id`). */
