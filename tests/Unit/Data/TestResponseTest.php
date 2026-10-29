@@ -71,6 +71,9 @@ final class TestResponseTest extends TestCase
 
         self::assertSame(['a=1; Expires=Thu, 29 Oct 2026 08:00:00 GMT', 'b=2', 'c=3'], $response->headerValues('Set-Cookie'));
         self::assertSame([], $response->headerValues('X-Missing'));
+        // A keyed list: unpacked as named arguments, a string key threw.
+        $keyed = new TestResponse(new HttpResponse('ok', 200, ['Set-Cookie' => ['session' => 'a=1', 0 => 'b=2']]));
+        self::assertSame(['a=1', 'b=2'], $keyed->headerValues('set-cookie'));
     }
 
     #[Test]

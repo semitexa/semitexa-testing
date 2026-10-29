@@ -46,7 +46,11 @@ final class TestResponse
         $values = [];
         foreach ($this->response->getHeaders() as $key => $value) {
             if (strcasecmp((string) $key, $name) === 0) {
-                array_push($values, ...array_map('strval', (array) $value));
+                // One by one: a keyed list unpacked with ... passes its string
+                // keys as named arguments, and array_push() throws on them.
+                foreach ((array) $value as $one) {
+                    $values[] = (string) $one;
+                }
             }
         }
 
