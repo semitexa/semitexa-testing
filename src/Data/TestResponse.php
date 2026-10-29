@@ -22,20 +22,21 @@ final class TestResponse
         return $this->response->getContent();
     }
 
-    /** A header's value, case-insensitive; null when it was not sent, or sent with no value. */
+    /**
+     * A header's value, case-insensitive, every spelling of its name joined as
+     * over HTTP ('Vary' and 'vary' are one header); null when it was not sent,
+     * or sent with no value.
+     */
     public function header(string $name): ?string
     {
+        $values = [];
         foreach ($this->response->getHeaders() as $key => $value) {
             if (strcasecmp((string) $key, $name) === 0) {
-                if ($value === []) {
-                    return null;
-                }
-
-                return is_array($value) ? implode(', ', array_map('strval', $value)) : (string) $value;
+                array_push($values, ...array_map('strval', (array) $value));
             }
         }
 
-        return null;
+        return $values === [] ? null : implode(', ', $values);
     }
 
     /** The decoded JSON body, or the value at a dot path (`data.items.0.id`). */

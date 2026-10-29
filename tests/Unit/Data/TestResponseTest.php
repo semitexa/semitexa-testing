@@ -54,6 +54,15 @@ final class TestResponseTest extends TestCase
         $response->assertHeader('X-Trace');
     }
 
+    /** Only the first spelling was read: 'Vary' and 'vary' came back as the first alone, unlike over HTTP. */
+    #[Test]
+    public function every_spelling_of_a_header_is_read_together(): void
+    {
+        $response = new TestResponse(new HttpResponse('ok', 200, ['Vary' => 'Accept', 'vary' => ['Cookie', 'Origin'], 'X-None' => [], 'x-none' => []]));
+
+        self::assertSame(['Accept, Cookie, Origin', null], [$response->header('VARY'), $response->header('X-None')]);
+    }
+
     #[Test]
     public function not_seeing_a_text_in_an_empty_body_fails(): void
     {
