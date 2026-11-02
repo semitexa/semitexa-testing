@@ -26,7 +26,8 @@ final class TestDatabaseHost
      */
     public static function unresolvable(?string $driver = null, ?string $host = null, ?\Closure $resolves = null): ?string
     {
-        $driver ??= (string) Environment::getEnvValue('DB_DRIVER', '');
+        // The ORM's own default: no DB_DRIVER is MySQL.
+        $driver ??= (string) Environment::getEnvValue('DB_DRIVER', 'mysql');
         if (!in_array(strtolower($driver), ['mysql', 'mariadb'], true)) {
             return null;
         }
@@ -34,12 +35,31 @@ final class TestDatabaseHost
         if ($host === '' || filter_var($host, FILTER_VALIDATE_IP) !== false) {
             return null;
         }
-        $resolves ??= static fn (string $name): bool => gethostbyname($name) !== $name;
+        $resolves ??= self::resolves(...);
         if ($resolves($host)) {
             return null;
         }
 
         return "DB_HOST '{$host}' does not resolve from this process, so every database test would fail on DNS. "
             . "The tests run inside the project's stack: bin/semitexa test:run (add a path or --filter to narrow it).";
+    }
+
+    /**
+     * An IPv4 address (DNS or /etc/hosts, through gethostbyname) or an IPv6
+     * one (an AAAA record): a host reachable over IPv6 only resolves too.
+     *
+     * @param (\Closure(string): string)|null $ipv4 gethostbyname() by default
+     * @param (\Closure(string): mixed)|null $ipv6 the AAAA records, dns_get_record() by default
+     */
+    public static function resolves(string $name, ?\Closure $ipv4 = null, ?\Closure $ipv6 = null): bool
+    {
+        $ipv4 ??= static fn (string $n): string => gethostbyname($n);
+        if ($ipv4($name) !== $name) {
+            return true;
+        }
+        $ipv6 ??= static fn (string $n): mixed => @dns_get_record($n, DNS_AAAA);
+        $aaaa = $ipv6($name);
+
+        return is_array($aaaa) && $aaaa !== [];
     }
 }
