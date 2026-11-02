@@ -111,4 +111,14 @@ declare(strict_types=1);
 
     \Semitexa\Core\Boot\LocalModuleAutoloadRegistrar::register();
     \Semitexa\Testing\Boot\LocalModuleTestAutoloadRegistrar::register();
+
+    // A MySQL host this process cannot even resolve is a run outside the
+    // stack: `vendor/bin/phpunit` on the host, where DB_HOST=mysql names a
+    // compose service. It used to go on and fail 9 to 16 tests with DNS errors
+    // that read like broken code (bench-host-phpunit-db). Said once, at once.
+    $outsideTheStack = \Semitexa\Testing\Boot\TestDatabaseHost::unresolvable();
+    if ($outsideTheStack !== null) {
+        \fwrite(\STDERR, $outsideTheStack . "\n");
+        exit(1);
+    }
 })();
