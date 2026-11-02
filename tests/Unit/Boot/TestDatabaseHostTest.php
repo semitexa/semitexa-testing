@@ -21,6 +21,19 @@ final class TestDatabaseHostTest extends TestCase
         self::assertStringContainsString('bin/semitexa test:run', $why);
     }
 
+    /** The host checked is the one the ORM connects to: outside Docker a DB_CLI_HOST wins. */
+    #[Test]
+    public function the_host_is_the_one_the_orm_picks(): void
+    {
+        $env = static fn (array $vars): \Closure => static fn (string $key): ?string => $vars[$key] ?? null;
+        $both = $env(['DB_HOST' => 'mysql', 'DB_CLI_HOST' => '127.0.0.1']);
+
+        self::assertSame(['DB_CLI_HOST', '127.0.0.1'], TestDatabaseHost::ormHost(false, $both), 'on the host the CLI host is used');
+        self::assertSame(['DB_HOST', 'mysql'], TestDatabaseHost::ormHost(true, $both), 'inside Docker the service name is');
+        self::assertSame(['DB_HOST', 'mysql'], TestDatabaseHost::ormHost(false, $env(['DB_HOST' => 'mysql', 'DB_CLI_HOST' => ''])), 'an empty CLI host: DB_HOST');
+        self::assertSame(['DB_HOST', '127.0.0.1'], TestDatabaseHost::ormHost(false, $env([])), "the ORM's default");
+    }
+
     /** No DB_DRIVER is MySQL, as the ORM reads it. */
     #[Test]
     public function an_unset_driver_is_mysql(): void

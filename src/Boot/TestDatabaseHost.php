@@ -31,7 +31,10 @@ final class TestDatabaseHost
         if (!in_array(strtolower($driver), ['mysql', 'mariadb'], true)) {
             return null;
         }
-        $host ??= (string) Environment::getEnvValue('DB_HOST', '');
+        $variable = 'DB_HOST';
+        if ($host === null) {
+            [$variable, $host] = self::ormHost();
+        }
         if ($host === '' || filter_var($host, FILTER_VALIDATE_IP) !== false) {
             return null;
         }
@@ -40,8 +43,30 @@ final class TestDatabaseHost
             return null;
         }
 
-        return "DB_HOST '{$host}' does not resolve from this process, so every database test would fail on DNS. "
+        return "{$variable} '{$host}' does not resolve from this process, so every database test would fail on DNS. "
             . "The tests run inside the project's stack: bin/semitexa test:run (add a path or --filter to narrow it).";
+    }
+
+    /**
+     * The host the ORM connects to, as OrmManager::resolveDbHost() picks it:
+     * outside Docker a set DB_CLI_HOST wins, else DB_HOST (default 127.0.0.1).
+     *
+     * @param (\Closure(string): ?string)|null $env a variable's value, Environment::getEnvValue() by default
+     * @return array{string, string} the variable it came from, and the host
+     */
+    public static function ormHost(?bool $inDocker = null, ?\Closure $env = null): array
+    {
+        $inDocker ??= file_exists('/.dockerenv');
+        $env ??= static fn (string $key): ?string => Environment::getEnvValue($key);
+        if (!$inDocker) {
+            $cli = $env('DB_CLI_HOST');
+            if ($cli !== null && $cli !== '') {
+                return ['DB_CLI_HOST', $cli];
+            }
+        }
+        $host = $env('DB_HOST');
+
+        return ['DB_HOST', $host ?? '127.0.0.1'];
     }
 
     /**
