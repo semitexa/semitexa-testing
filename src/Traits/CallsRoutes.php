@@ -6,6 +6,7 @@ namespace Semitexa\Testing\Traits;
 
 use Semitexa\Core\Application;
 use Semitexa\Core\Request;
+use Semitexa\Core\Server\Lifecycle\InProcessWorkerStart;
 use Semitexa\Testing\Data\TestResponse;
 
 /**
@@ -15,6 +16,9 @@ use Semitexa\Testing\Data\TestResponse;
  *
  *     $this->getJson('/api/orders/42')->assertOk()->assertJsonPath('data.id', 42);
  *     $this->postJson('/api/orders', ['sku' => 'A-1'], ['Authorization' => 'Bearer …'])->assertStatus(201);
+ *
+ * The first request runs the worker start-up phase once (InProcessWorkerStart),
+ * so a Twig page renders as it does in a worker.
  *
  * Cookies given with withCookie() go with every request after it, so a test
  * can carry a session; headers given to one call go with that call only and
@@ -148,8 +152,12 @@ trait CallsRoutes
             content: $content,
         );
 
-        // handleRequest() resets per-request state itself. An exception it
-        // lets out reaches the test, where the server would answer 500.
+        // What a worker wires at start (the registries a page render reads),
+        // once per process; then handleRequest() resets per-request state
+        // itself. An exception it lets out reaches the test, where the server
+        // would answer 500.
+        InProcessWorkerStart::once();
+
         return new TestResponse(($this->httpTestApplication ??= new Application())->handleRequest($request));
     }
 
