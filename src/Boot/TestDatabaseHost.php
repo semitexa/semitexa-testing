@@ -45,14 +45,23 @@ final class TestDatabaseHost
     }
 
     /**
-     * An IPv4 address (DNS or /etc/hosts, through gethostbyname) or an IPv6
-     * one (an AAAA record): a host reachable over IPv6 only resolves too.
+     * The system resolver first (getaddrinfo, both families, /etc/hosts
+     * included) where ext-sockets offers it; then an IPv4 address (DNS or
+     * /etc/hosts, through gethostbyname) or an AAAA record. A host reachable
+     * over IPv6 only resolves too.
      *
      * @param (\Closure(string): string)|null $ipv4 gethostbyname() by default
      * @param (\Closure(string): mixed)|null $ipv6 the AAAA records, dns_get_record() by default
+     * @param (\Closure(string): bool)|null $system getaddrinfo by default, when ext-sockets is loaded
      */
-    public static function resolves(string $name, ?\Closure $ipv4 = null, ?\Closure $ipv6 = null): bool
+    public static function resolves(string $name, ?\Closure $ipv4 = null, ?\Closure $ipv6 = null, ?\Closure $system = null): bool
     {
+        $system ??= function_exists('socket_addrinfo_lookup')
+            ? static fn (string $n): bool => is_array($found = @socket_addrinfo_lookup($n)) && $found !== []
+            : static fn (string $n): bool => false;
+        if ($system($name)) {
+            return true;
+        }
         $ipv4 ??= static fn (string $n): string => gethostbyname($n);
         if ($ipv4($name) !== $name) {
             return true;

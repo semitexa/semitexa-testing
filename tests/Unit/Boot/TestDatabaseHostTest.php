@@ -51,12 +51,17 @@ final class TestDatabaseHostTest extends TestCase
     {
         $noIpv4 = static fn (string $name): string => $name;
 
-        self::assertTrue(TestDatabaseHost::resolves('db6', $noIpv4, static fn (string $name): array => [['type' => 'AAAA', 'ipv6' => '2001:db8::1']]));
-        self::assertFalse(TestDatabaseHost::resolves('nowhere', $noIpv4, static fn (string $name): array => []));
-        self::assertFalse(TestDatabaseHost::resolves('nowhere', $noIpv4, static fn (string $name): bool => false), 'a failed lookup is no address');
+        // An /etc/hosts entry with only an IPv6 address: neither gethostbyname
+        // nor a DNS record lookup sees it, the system resolver does.
+        self::assertTrue(TestDatabaseHost::resolves('db6', $noIpv4, static fn (string $name): array => [], static fn (string $name): bool => true));
+
+        self::assertTrue(TestDatabaseHost::resolves('db6', $noIpv4, static fn (string $name): array => [['type' => 'AAAA', 'ipv6' => '2001:db8::1']], static fn (string $name): bool => false));
+        $noSystem = static fn (string $name): bool => false;
+        self::assertFalse(TestDatabaseHost::resolves('nowhere', $noIpv4, static fn (string $name): array => [], $noSystem));
+        self::assertFalse(TestDatabaseHost::resolves('nowhere', $noIpv4, static fn (string $name): bool => false, $noSystem), 'a failed lookup is no address');
         self::assertTrue(TestDatabaseHost::resolves('db4', static fn (string $name): string => '10.0.0.5', static function (string $name): never {
             throw new \LogicException('an IPv4 answer needs no AAAA lookup');
-        }));
+        }, static fn (string $name): bool => false));
     }
 
     #[Test]
