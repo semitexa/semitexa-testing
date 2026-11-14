@@ -23,7 +23,20 @@ final class E2eFixtureDiscovery
     /** @return list<array{id: string, priority: int, class: class-string<E2eFixtureInterface>}> */
     public function discover(): array
     {
-        return self::ordered($this->classDiscovery->findClassesWithAttribute(AsE2eFixture::class));
+        $fixtures = self::ordered($this->classDiscovery->findClassesWithAttribute(AsE2eFixture::class));
+        // A class whose file failed to load is in no answer of findClassesWithAttribute(): a fixture
+        // among them would just be missing while the others ran (review, testing#40). Its source
+        // says whether it is one; an unreadable source may be, so it is refused too.
+        $map = $this->classDiscovery->getClassMap();
+        foreach ($this->classDiscovery->unloadableClasses() as $class => $why) {
+            $file = $map[$class] ?? null;
+            $source = is_string($file) && is_file($file) ? @file_get_contents($file) : false;
+            if ($source === false || str_contains($source, 'AsE2eFixture')) {
+                throw new \LogicException(sprintf('E2E fixture %s could not be loaded (%s): no fixture runs while one is missing.', $class, $why));
+            }
+        }
+
+        return $fixtures;
     }
 
     /**
@@ -44,6 +57,12 @@ final class E2eFixtureDiscovery
             }
             if (!$ref->implementsInterface(E2eFixtureInterface::class)) {
                 throw new \LogicException(sprintf('%s is marked #[AsE2eFixture] but does not implement %s.', $class, E2eFixtureInterface::class));
+            }
+            // e2e:fixtures makes it with `new $class()`: a constructor that cannot be called so would
+            // fail after earlier fixtures had written (review, testing#40).
+            $constructor = $ref->getConstructor();
+            if ($constructor !== null && (!$constructor->isPublic() || $constructor->getNumberOfRequiredParameters() > 0)) {
+                throw new \LogicException(sprintf('E2E fixture %s must be constructible with no arguments.', $class));
             }
             $attributes = $ref->getAttributes(AsE2eFixture::class);
             if ($attributes === []) {

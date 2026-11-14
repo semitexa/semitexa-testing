@@ -16,6 +16,7 @@ use Semitexa\Testing\Application\Service\E2e\E2eFixtureDiscovery;
 use Semitexa\Testing\Application\Service\E2e\Fixture\SignInOwnerFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\DuplicateIdFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\FirstFixture;
+use Semitexa\Testing\Tests\Fixture\E2e\NeedsArgumentFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\NotAFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\SamePriorityByIdFixture;
 
@@ -97,7 +98,11 @@ final class E2eFixturesTest extends TestCase
         E2eFixtureDiscovery::ordered([NotAFixture::class]);
     }
 
-    /** No password from the runner, no account: a fixed one is never written. */
+    /**
+     * No password from the runner, no account: a fixed one is never written. Without the suggested
+     * semitexa/platform-user it writes nothing either and says why (review, testing#40). One test for
+     * both installs, so neither is a skip.
+     */
     #[Test]
     public function the_owner_fixture_writes_no_account_without_the_runners_password(): void
     {
@@ -112,10 +117,24 @@ final class E2eFixturesTest extends TestCase
                 return false;
             }
         };
+        $context = new E2eFixtureContext(self::database('semitexa_e2e', marker: true), $container, ['SEMITEXA_E2E_PASSWORD' => '']);
 
+        if (!interface_exists(\Semitexa\Platform\User\Domain\Contract\PlatformUserRepositoryInterface::class)) {
+            self::assertSame('skipped: semitexa/platform-user is not installed', (new SignInOwnerFixture())->apply($context));
+
+            return;
+        }
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('SEMITEXA_E2E_PASSWORD is not set');
-        (new SignInOwnerFixture())->apply(new E2eFixtureContext(self::database('semitexa_e2e', marker: true), $container, ['SEMITEXA_E2E_PASSWORD' => '']));
+        (new SignInOwnerFixture())->apply($context);
+    }
+
+    #[Test]
+    public function a_fixture_that_cannot_be_made_with_no_arguments_is_refused(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('must be constructible with no arguments');
+        E2eFixtureDiscovery::ordered([NeedsArgumentFixture::class]);
     }
 
     private static function database(string $name, bool $marker): DatabaseAdapterInterface
