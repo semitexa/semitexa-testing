@@ -24,19 +24,30 @@ final class E2eFixtureDiscovery
     public function discover(): array
     {
         $fixtures = self::ordered($this->classDiscovery->findClassesWithAttribute(AsE2eFixture::class));
-        // A class whose file failed to load is in no answer of findClassesWithAttribute(): a fixture
-        // among them would just be missing while the others ran (review, testing#40). Its source
-        // says whether it is one; an unreadable source may be, so it is refused too.
-        $map = $this->classDiscovery->getClassMap();
-        foreach ($this->classDiscovery->unloadableClasses() as $class => $why) {
-            $file = $map[$class] ?? null;
+        self::refuseUnloadedFixtures($this->classDiscovery->unloadableClasses(), $this->classDiscovery->getClassMap());
+
+        return $fixtures;
+    }
+
+    /**
+     * A class whose file failed to load is in no answer of findClassesWithAttribute(): a fixture
+     * among them would just be missing while the others ran (review, testing#40). Its source says
+     * whether it is one, read as PHP reads an attribute name, case-insensitively
+     * (`#[A\ase2efixture]` is the same attribute); an unreadable source may be one, so it is
+     * refused too.
+     *
+     * @param array<string, string> $unloadable class => why it could not be loaded
+     * @param array<string, string> $classMap class => file
+     */
+    public static function refuseUnloadedFixtures(array $unloadable, array $classMap): void
+    {
+        foreach ($unloadable as $class => $why) {
+            $file = $classMap[$class] ?? null;
             $source = is_string($file) && is_file($file) ? @file_get_contents($file) : false;
-            if ($source === false || str_contains($source, 'AsE2eFixture')) {
+            if ($source === false || stripos($source, 'AsE2eFixture') !== false) {
                 throw new \LogicException(sprintf('E2E fixture %s could not be loaded (%s): no fixture runs while one is missing.', $class, $why));
             }
         }
-
-        return $fixtures;
     }
 
     /**

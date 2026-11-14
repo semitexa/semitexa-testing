@@ -18,6 +18,7 @@ use Semitexa\Testing\Tests\Fixture\E2e\DuplicateIdFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\FirstFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\NeedsArgumentFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\NotAFixture;
+use Semitexa\Testing\Tests\Fixture\E2e\PrivateConstructorFixture;
 use Semitexa\Testing\Tests\Fixture\E2e\SamePriorityByIdFixture;
 
 /**
@@ -132,9 +133,40 @@ final class E2eFixturesTest extends TestCase
     #[Test]
     public function a_fixture_that_cannot_be_made_with_no_arguments_is_refused(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('must be constructible with no arguments');
-        E2eFixtureDiscovery::ordered([NeedsArgumentFixture::class]);
+        foreach ([NeedsArgumentFixture::class, PrivateConstructorFixture::class] as $class) {
+            try {
+                E2eFixtureDiscovery::ordered([$class]);
+                self::fail("{$class} would fail at new \$class() after earlier fixtures had written");
+            } catch (\LogicException $e) {
+                self::assertStringContainsString('must be constructible with no arguments', $e->getMessage(), $class);
+            }
+        }
+    }
+
+    /** Review, testing#40: an unloadable class that names the attribute, in any case, stops the run. */
+    #[Test]
+    public function an_unloadable_class_that_names_the_attribute_in_any_case_refuses_the_run(): void
+    {
+        $dir = sys_get_temp_dir() . '/e2e-fixtures-' . bin2hex(random_bytes(4));
+        mkdir($dir);
+        try {
+            file_put_contents("{$dir}/Lower.php", "<?php\nuse Semitexa\\Testing\\Attributes as A;\n#[A\\ase2efixture(id: 'x')]\nfinal class Lower extends Missing {}\n");
+            file_put_contents("{$dir}/Other.php", "<?php\nfinal class Other extends AnOptionalDependency {}\n");
+            $map = ['Lower' => "{$dir}/Lower.php", 'Other' => "{$dir}/Other.php", 'Gone' => "{$dir}/Gone.php"];
+
+            E2eFixtureDiscovery::refuseUnloadedFixtures(['Other' => 'parent missing'], $map);
+            foreach (['Lower', 'Gone'] as $class) {
+                try {
+                    E2eFixtureDiscovery::refuseUnloadedFixtures([$class => 'parent missing'], $map);
+                    self::fail("{$class} could be a fixture and was let through");
+                } catch (\LogicException $e) {
+                    self::assertStringContainsString("E2E fixture {$class} could not be loaded", $e->getMessage());
+                }
+            }
+        } finally {
+            array_map('unlink', glob("{$dir}/*.php") ?: []);
+            rmdir($dir);
+        }
     }
 
     private static function database(string $name, bool $marker): DatabaseAdapterInterface
