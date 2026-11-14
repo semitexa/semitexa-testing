@@ -25,7 +25,7 @@ use Semitexa\Testing\Tests\Fixture\E2e\SamePriorityByIdFixture;
  */
 final class E2eFixturesTest extends TestCase
 {
-    private const E2E_ENV = ['APP_ENV' => 'dev', 'DB_E2E_DATABASE' => 'semitexa_e2e'];
+    private const E2E_ENV = ['APP_ENV' => 'dev', 'DB_E2E_DATABASE' => 'semitexa_e2e', 'SEMITEXA_E2E_TOKEN' => 'run-token'];
 
     #[Test]
     public function the_e2e_database_with_its_marker_is_the_only_one_accepted(): void
@@ -37,8 +37,9 @@ final class E2eFixturesTest extends TestCase
     public function production_is_refused_even_on_a_marked_e2e_database(): void
     {
         $marked = self::database('semitexa_e2e', marker: true);
-        foreach ([['APP_ENV' => 'prod'], ['APP_ENV' => 'production'], ['APP_ENV' => ''], []] as $env) {
-            self::assertStringContainsString('never run in production', (string) E2eDatabaseGuard::refusal($marked, $env + ['DB_E2E_DATABASE' => 'semitexa_e2e']), json_encode($env) ?: '');
+        // An allowlist: "staging" or "live" is no E2E environment either (Fable's review, testing#40).
+        foreach ([['APP_ENV' => 'prod'], ['APP_ENV' => 'production'], ['APP_ENV' => 'staging'], ['APP_ENV' => 'live'], ['APP_ENV' => ''], []] as $env) {
+            self::assertStringContainsString('never in production', (string) E2eDatabaseGuard::refusal($marked, $env + ['DB_E2E_DATABASE' => 'semitexa_e2e', 'SEMITEXA_E2E_TOKEN' => 'run-token']), json_encode($env) ?: '');
         }
     }
 
@@ -59,9 +60,18 @@ final class E2eFixturesTest extends TestCase
     #[Test]
     public function the_configured_e2e_name_is_the_one_asked_for(): void
     {
-        $env = ['APP_ENV' => 'dev', 'DB_E2E_DATABASE' => 'shop_e2e'];
+        $env = ['APP_ENV' => 'dev', 'DB_E2E_DATABASE' => 'shop_e2e', 'SEMITEXA_E2E_TOKEN' => 'run-token'];
         self::assertNull(E2eDatabaseGuard::refusal(self::database('shop_e2e', marker: true), $env));
         self::assertNotNull(E2eDatabaseGuard::refusal(self::database('semitexa_e2e', marker: true), $env));
+    }
+
+    /** Fable's review, testing#40: a dump of the E2E database restored elsewhere carries the table. */
+    #[Test]
+    public function the_marker_must_hold_this_runs_token(): void
+    {
+        $marked = self::database('semitexa_e2e', marker: true);
+        self::assertStringContainsString('SEMITEXA_E2E_TOKEN is not set', (string) E2eDatabaseGuard::refusal($marked, ['SEMITEXA_E2E_TOKEN' => ' '] + self::E2E_ENV));
+        self::assertStringContainsString("no row for this run's token", (string) E2eDatabaseGuard::refusal($marked, ['SEMITEXA_E2E_TOKEN' => 'another-run'] + self::E2E_ENV));
     }
 
     #[Test]
@@ -127,11 +137,14 @@ final class E2eFixturesTest extends TestCase
 
             public function execute(string $sql, array $params = []): QueryResult
             {
-                if (!str_contains($sql, 'information_schema.tables') || ($params['marker'] ?? null) !== E2eDatabaseGuard::MARKER_TABLE) {
-                    throw new \LogicException('unexpected statement: ' . $sql);
+                if (str_contains($sql, 'information_schema.tables') && ($params['marker'] ?? null) === E2eDatabaseGuard::MARKER_TABLE) {
+                    return new QueryResult($this->marker ? [['found' => 1]] : []);
+                }
+                if ($sql === 'SELECT 1 AS found FROM ' . E2eDatabaseGuard::MARKER_TABLE . ' WHERE token = :token') {
+                    return new QueryResult($this->marker && ($params['token'] ?? null) === 'run-token' ? [['found' => 1]] : []);
                 }
 
-                return new QueryResult($this->marker ? [['found' => 1]] : []);
+                throw new \LogicException('unexpected statement: ' . $sql);
             }
 
             public function query(string $sql): QueryResult

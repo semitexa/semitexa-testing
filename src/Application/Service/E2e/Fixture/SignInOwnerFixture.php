@@ -47,9 +47,23 @@ final class SignInOwnerFixture implements E2eFixtureInterface
         }
         $hash = $hasher->hash($password);
 
-        // A copied database may hold the account already: reset it to an active owner.
-        $existing = $users->findByEmail($email, '');
+        // A copied database may hold the account already, under any tenant: reset that one row to an
+        // active owner. A second row would make the tenant-less sign-in lookup find two and refuse
+        // both (Fable's review, testing#40).
+        $normalized = strtolower(trim($email));
+        $matches = array_values(array_filter(
+            $users->findAll(null, true),
+            static fn (PlatformUser $user): bool => strtolower(trim($user->getEmail())) === $normalized,
+        ));
+        if (count($matches) > 1) {
+            throw new \RuntimeException(sprintf('%s is %d accounts in the E2E database: the sign-in would find none.', $email, count($matches)));
+        }
+        $existing = $matches[0] ?? null;
         if ($existing !== null) {
+            // An owner belongs to no site, and a copied row other tables point at is not deleted here.
+            if ($existing->getTenantId() !== '') {
+                throw new \RuntimeException(sprintf('%s is an account of tenant %s in the E2E database: an owner belongs to no site. Set SEMITEXA_E2E_EMAIL to another address.', $email, $existing->getTenantId()));
+            }
             $users->update($existing->withPasswordHash($hash)->withRole(UserRole::Owner)->withStatus(UserStatus::Active));
 
             return sprintf('owner %s: password reset for this run', $email);
